@@ -687,3 +687,13 @@ body {
   color: var(--teal);
   border-bottom-color: var(--teal);
 }
+
+.admin-code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 5px;
+  word-break: break-all;
+}

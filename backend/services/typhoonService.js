@@ -16,17 +16,27 @@ async function callTyphoon(body) {
   const apiKey = process.env.TYPHOON_API_KEY?.trim();
 
   if (!apiKey) {
-    throw new Error("TYPHOON_API_KEY is missing. Please check backend/.env");
+    const error = new Error("TYPHOON_API_KEY is missing. Please check backend/.env");
+    error.code = "TYPHOON_KEY_MISSING";
+    throw error;
   }
 
-  const response = await fetch(TYPHOON_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(body),
-  });
+  let response;
+  try {
+    response = await fetch(TYPHOON_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(body),
+    });
+  } catch (cause) {
+    const error = new Error(`Could not reach the Typhoon API: ${cause.message}`);
+    error.code = "TYPHOON_UNREACHABLE";
+    error.cause = cause;
+    throw error;
+  }
 
   if (!response.ok) {
     const errText = await response.text();
@@ -34,6 +44,14 @@ async function callTyphoon(body) {
     // since upstream error bodies can echo request details.
     const error = new Error(`Typhoon API request failed (${response.status}): ${errText}`);
     error.upstreamStatus = response.status;
+    // A rejected key and a struggling service need different responses, so
+    // separate them here rather than reporting one generic upstream failure.
+    error.code =
+      response.status === 401 || response.status === 403
+        ? "TYPHOON_KEY_REJECTED"
+        : response.status === 429
+          ? "TYPHOON_RATE_LIMITED"
+          : "TYPHOON_UNAVAILABLE";
     throw error;
   }
 

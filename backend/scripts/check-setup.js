@@ -76,6 +76,28 @@ if (process.env.TYPHOON_API_KEY?.trim()) {
 }
 
 /* -------------------------------------------------------------------------- */
+console.log("\n[3b] poppler (pdftoppm)  ← ต้องมีถึงจะอ่าน PDF ได้");
+
+try {
+  const { execFileSync } = require("child_process");
+  const out = execFileSync("pdftoppm", ["-v"], { stdio: ["ignore", "pipe", "pipe"] });
+  const version = String(out).trim().split("\n")[0];
+  ok(`ติดตั้งแล้ว${version ? ` (${version})` : ""}`);
+} catch (error) {
+  if (error.code === "ENOENT") {
+    bad(
+      "ไม่พบคำสั่ง pdftoppm — อัปโหลด PDF จะไม่สำเร็จ",
+      process.platform === "win32"
+        ? "โหลด poppler จาก github.com/oschwartz10612/poppler-windows/releases แตกไฟล์ แล้วเพิ่มโฟลเดอร์ bin ลงใน PATH จากนั้นเปิด terminal ใหม่"
+        : "macOS: brew install poppler   /   Ubuntu: sudo apt-get install poppler-utils"
+    );
+  } else {
+    // pdftoppm -v exits non-zero on some builds while still being installed.
+    ok("พบคำสั่ง pdftoppm");
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 console.log("\n[4] Supabase");
 
 let supabaseReady = false;

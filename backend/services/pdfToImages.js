@@ -30,11 +30,20 @@ function pdfBufferToPngPages(pdfBuffer, dpi = 200) {
       (err) => {
         if (err) {
           cleanup(tmpDir);
-          return reject(
-            new Error(
-              `pdftoppm failed (is poppler-utils installed and on PATH?): ${err.message}`
-            )
+
+          // ENOENT means the binary itself is not on PATH, which is a setup
+          // problem the operator can fix — quite different from a PDF that
+          // poppler could not read. They need different advice, so they get
+          // different codes.
+          const missing = err.code === "ENOENT";
+          const error = new Error(
+            missing
+              ? "pdftoppm was not found on PATH. Install poppler and restart the server."
+              : `pdftoppm failed to render the PDF: ${err.message}`
           );
+          error.code = missing ? "POPPLER_MISSING" : "PDF_RENDER_FAILED";
+
+          return reject(error);
         }
 
         try {

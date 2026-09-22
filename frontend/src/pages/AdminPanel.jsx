@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, getAdminToken, setAdminToken } from "../api.js";
 
+// Mirrors the limit multer enforces on the server.
+const MAX_PDF_BYTES = 15 * 1024 * 1024;
+
 const THAI_WEEKDAYS = ["อาทิตย์", "จันทร์", "อังคาร", "พุธ", "พฤหัสบดี", "ศุกร์", "เสาร์"];
 
 const STATUS_LABELS = {
@@ -92,9 +95,28 @@ function UploadForm({ teachers, onUploaded }) {
     }
   }
 
+  // Every field below needs a teacher, so with none in the system the form is
+  // permanently disabled. Say why instead of presenting a dead form.
+  if (teachers.length === 0) {
+    return (
+      <section className="admin-card">
+        <h2 className="admin-subtitle">อัปโหลดตารางสอน (PDF)</h2>
+        <p className="admin-hint">
+          ต้องเพิ่มอาจารย์ก่อนจึงจะอัปโหลดตารางสอนได้ — กดปุ่ม “+ เพิ่มอาจารย์” ด้านบน
+          หรือย้ายข้อมูลเดิมเข้ามาด้วยคำสั่ง
+          {" "}
+          <code className="admin-code">node scripts/migrate-schedule-json.js</code>
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section className="admin-card">
       <h2 className="admin-subtitle">อัปโหลดตารางสอน (PDF)</h2>
+      <p className="admin-hint">
+        ระบบจะอ่านข้อมูลด้วย OCR แล้วเก็บเป็นฉบับร่าง ตารางสอนที่ใช้งานอยู่จะไม่เปลี่ยนจนกว่าจะกดเผยแพร่
+      </p>
 
       <form onSubmit={submit} className="admin-form admin-form--grid">
         <label className="admin-field">
@@ -133,13 +155,25 @@ function UploadForm({ teachers, onUploaded }) {
           <input
             className="admin-input"
             type="file"
-            accept="application/pdf"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            accept="application/pdf,.pdf"
+            onChange={(e) => {
+              const picked = e.target.files?.[0] || null;
+              setError(
+                picked && picked.size > MAX_PDF_BYTES
+                  ? `ไฟล์ใหญ่ ${(picked.size / 1024 / 1024).toFixed(1)}MB เกินขีดจำกัด 15MB`
+                  : null
+              );
+              setFile(picked);
+            }}
           />
         </label>
 
-        <button className="admin-button" type="submit" disabled={busy || !file || !teacherId}>
-          {busy ? "กำลังอ่านเอกสาร… (อาจใช้เวลาสักครู่)" : "อัปโหลดและอ่านข้อมูล"}
+        <button
+          className="admin-button"
+          type="submit"
+          disabled={busy || !file || !teacherId || file.size > MAX_PDF_BYTES}
+        >
+          {busy ? "กำลังอ่านเอกสาร… (อาจใช้เวลา 1-2 นาที)" : "อัปโหลดและอ่านข้อมูล"}
         </button>
       </form>
 

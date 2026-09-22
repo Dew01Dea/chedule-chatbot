@@ -139,7 +139,19 @@ node scripts/check-setup.js
 ```
 
 It reports what is configured and what is not, and what to do about each. It
-prints no secret values. The two failures it exists for are both quiet ones: a
+prints no secret values.
+
+It inspects the shell you run it from, which is not necessarily what the
+server sees — a process inherits `PATH` when it starts, so installing poppler
+without restarting the server leaves this script reporting success while
+uploads keep failing. To ask the running server itself:
+
+```
+GET /api/admin/diagnostics     (needs the admin token)
+```
+
+If that reports poppler unavailable while the script says it is installed,
+restart the server from a new terminal. The two failures it exists for are both quiet ones: a
 missing Supabase key leaves the server in read-only mode rather than erroring,
 and an unreadable `ADMIN_TOKENS` refuses every admin request while the startup
 log still looks healthy.

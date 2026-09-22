@@ -113,6 +113,43 @@ router.post("/schedules/upload", upload.single("schedulePdf"), async (req, res) 
   }
 });
 
+/**
+ * GET /api/admin/diagnostics
+ *
+ * Reports what the RUNNING server process can see, which is not always what a
+ * terminal sees. A process inherits PATH at launch, so installing poppler and
+ * then not restarting the server leaves check-setup.js reporting success from
+ * a fresh shell while uploads keep failing. Asking the server itself settles
+ * which of the two is out of date.
+ *
+ * Admin-only, and reports presence rather than values.
+ */
+router.get("/diagnostics", async (req, res) => {
+  const { execFile } = require("child_process");
+
+  const poppler = await new Promise((resolve) => {
+    execFile("pdftoppm", ["-v"], (error, stdout, stderr) => {
+      if (error && error.code === "ENOENT") {
+        return resolve({ available: false, reason: "ไม่พบคำสั่ง pdftoppm ใน PATH ของเซิร์ฟเวอร์" });
+      }
+      // pdftoppm -v writes its banner to stderr and may exit non-zero.
+      const banner = String(stderr || stdout || "").trim().split("\n")[0] || null;
+      resolve({ available: true, version: banner });
+    });
+  });
+
+  res.json({
+    poppler,
+    store: { name: store.name, multiTeacher: Boolean(store.isMultiTeacher) },
+    typhoonKeyPresent: Boolean(process.env.TYPHOON_API_KEY?.trim()),
+    timezone: process.env.APP_TIMEZONE || "Asia/Bangkok",
+    node: process.version,
+    platform: process.platform,
+    serverStartedAt: new Date(Date.now() - Math.round(process.uptime() * 1000)).toISOString(),
+    uptimeSeconds: Math.round(process.uptime()),
+  });
+});
+
 /** GET /api/admin/teachers/:teacherId/schedules — every version, any status. */
 router.get("/teachers/:teacherId/schedules", async (req, res) => {
   try {

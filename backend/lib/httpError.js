@@ -20,7 +20,9 @@ const USER_SAFE_MESSAGES = {
   // cannot fix a setup problem they are not told about, and none of these
   // reveal anything a reviewer should not already know.
   POPPLER_MISSING:
-    "เซิร์ฟเวอร์ยังไม่ได้ติดตั้ง poppler จึงแปลง PDF เป็นภาพไม่ได้ — ติดตั้งแล้วเพิ่มโฟลเดอร์ bin ลงใน PATH จากนั้นรีสตาร์ทเซิร์ฟเวอร์",
+    "เซิร์ฟเวอร์หาคำสั่ง pdftoppm (poppler) ไม่เจอ จึงแปลง PDF เป็นภาพไม่ได้ — " +
+    "ถ้าติดตั้ง poppler ไปแล้ว ให้ปิดเซิร์ฟเวอร์ เปิด terminal ใหม่ แล้วสั่ง npm run dev อีกครั้ง " +
+    "เพราะโปรเซสที่รันอยู่ยังถือ PATH เดิมตั้งแต่ตอนเริ่ม",
   PDF_RENDER_FAILED: "เปิดไฟล์ PDF นี้ไม่สำเร็จ ไฟล์อาจเสียหายหรือถูกตั้งรหัสผ่านไว้",
   TYPHOON_KEY_MISSING: "ยังไม่ได้ตั้งค่า TYPHOON_API_KEY ในไฟล์ backend/.env",
   TYPHOON_KEY_REJECTED: "Typhoon ปฏิเสธ API key — ตรวจสอบ TYPHOON_API_KEY อีกครั้ง",

@@ -125,18 +125,8 @@ router.post("/schedules/upload", upload.single("schedulePdf"), async (req, res) 
  * Admin-only, and reports presence rather than values.
  */
 router.get("/diagnostics", async (req, res) => {
-  const { execFile } = require("child_process");
-
-  const poppler = await new Promise((resolve) => {
-    execFile("pdftoppm", ["-v"], (error, stdout, stderr) => {
-      if (error && error.code === "ENOENT") {
-        return resolve({ available: false, reason: "ไม่พบคำสั่ง pdftoppm ใน PATH ของเซิร์ฟเวอร์" });
-      }
-      // pdftoppm -v writes its banner to stderr and may exit non-zero.
-      const banner = String(stderr || stdout || "").trim().split("\n")[0] || null;
-      resolve({ available: true, version: banner });
-    });
-  });
+  const { checkPoppler } = require("../lib/poppler");
+  const poppler = await checkPoppler();
 
   res.json({
     poppler,

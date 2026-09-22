@@ -3,6 +3,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const crypto = require("crypto");
+const { pdftoppmCommand, popplerSource } = require("../lib/poppler");
 
 /**
  * Rasterizes every page of a PDF into PNG images using poppler's `pdftoppm`.
@@ -25,7 +26,7 @@ function pdfBufferToPngPages(pdfBuffer, dpi = 200) {
     fs.writeFileSync(pdfPath, pdfBuffer);
 
     execFile(
-      "pdftoppm",
+      pdftoppmCommand(),
       ["-png", "-r", String(dpi), pdfPath, outPrefix],
       (err) => {
         if (err) {
@@ -38,7 +39,8 @@ function pdfBufferToPngPages(pdfBuffer, dpi = 200) {
           const missing = err.code === "ENOENT";
           const error = new Error(
             missing
-              ? "pdftoppm was not found on PATH. Install poppler and restart the server."
+              ? `pdftoppm was not found. Looked in: ${popplerSource()}. ` +
+                "Set POPPLER_PATH in backend/.env to poppler's bin directory."
               : `pdftoppm failed to render the PDF: ${err.message}`
           );
           error.code = missing ? "POPPLER_MISSING" : "PDF_RENDER_FAILED";

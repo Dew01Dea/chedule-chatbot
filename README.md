@@ -36,7 +36,12 @@ Two Typhoon models, two jobs:
 ## Requirements
 
 - **Node.js 20+** (the tests use the built-in test runner).
-- **poppler** — PDF pages are rasterised with `pdftoppm` before OCR.
+- **poppler** — PDF pages are rasterised with `pdftoppm` before OCR. If the
+  server cannot find it, set `POPPLER_PATH` in `backend/.env` to poppler's bin
+  directory (e.g. `C:\poppler\Library\bin`) and PATH stops mattering. That is
+  the reliable option on Windows, where a process inherits PATH at launch and
+  an editor's integrated terminal inherits it from the editor — so poppler can
+  work in a new shell while the server still cannot see it.
   - macOS: `brew install poppler`
   - Ubuntu/Debian: `sudo apt-get install poppler-utils`
   - Windows: install poppler and add its `bin` folder to PATH

@@ -228,8 +228,31 @@ that the key is the server-side one, not the anon key.
 ### 2. Frontend
 
 Import the repository into Vercel. The root `vercel.json` already describes the
-build, so no framework settings need changing — it installs and builds inside
-`frontend/` and serves `frontend/dist`.
+build — it installs and builds inside `frontend/` and serves `frontend/dist` —
+so the Build & Development Settings in the dashboard should be left **empty**:
+
+| Setting | Value |
+| --- | --- |
+| Root Directory | `./` |
+| Build Command | *(empty)* |
+| Output Directory | *(empty)* |
+| Install Command | *(empty)* |
+
+Both halves are worth stating plainly, because each one fails in a way that
+does not name its cause:
+
+- A value typed into one of those fields **overrides** `vercel.json`. Vercel's
+  own placeholder text suggests `vite build`, and typing that in produces
+  `vite: command not found`, because the repository root has no `package.json`
+  — vite is installed under `frontend/`.
+- Root Directory has to stay `./`. Vercel reads `vercel.json` from whatever the
+  Root Directory is, so pointing it at `frontend` means the file is never read
+  at all, and `--prefix frontend` would then resolve against the wrong
+  directory.
+
+`vercel.json` is validated against a strict schema that rejects unknown keys,
+so it cannot carry JSON comments — anything worth explaining about the build
+belongs here instead.
 
 The one thing to add is an environment variable:
 

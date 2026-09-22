@@ -5,6 +5,7 @@ const multer = require("multer");
 
 const store = require("./store");
 const { getServiceKey } = require("./lib/supabaseClient");
+const { parseAdminTokens } = require("./middleware/requireAdmin");
 const scheduleRoutes = require("./routes/schedule");
 const chatRoutes = require("./routes/chat");
 const teacherRoutes = require("./routes/teachers");
@@ -92,8 +93,19 @@ if (require.main === module) {
           "running read-only against data/schedule.json. Multiple teachers and uploads are unavailable."
       );
     }
-    if (!process.env.ADMIN_TOKENS) {
-      console.warn("WARNING: ADMIN_TOKENS is not set; all admin endpoints will refuse requests.");
+    // Check what the middleware will actually parse, not merely that the
+    // variable exists — a malformed value otherwise looks fine here and then
+    // refuses every request, with the two messages disagreeing.
+    const adminTokens = parseAdminTokens();
+    if (adminTokens.size === 0) {
+      console.warn(
+        process.env.ADMIN_TOKENS
+          ? "WARNING: ADMIN_TOKENS is set but unreadable; admin endpoints will refuse requests. " +
+              'Use ADMIN_TOKENS=yourname:yourtoken (no quotes).'
+          : "WARNING: ADMIN_TOKENS is not set; all admin endpoints will refuse requests."
+      );
+    } else {
+      console.log(`Admin tokens loaded for: ${[...adminTokens.values()].join(", ")}`);
     }
     if (allowedOrigins.length === 0) {
       console.warn("WARNING: ALLOWED_ORIGINS is not set; all origins are accepted. Set it before deploying.");

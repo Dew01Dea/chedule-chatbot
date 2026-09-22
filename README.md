@@ -62,10 +62,20 @@ supabase db push
 Either way this creates the tables, constraints, RLS policies and the private
 `schedule-pdfs` storage bucket. It is safe to run more than once.
 
-From **Project Settings → API** you need the project URL and the
-**service_role** key. The service role key bypasses Row Level Security, so it
-belongs only in the backend's environment — never in frontend code, and never
-committed.
+From **Project Settings → API** you need the project URL and the server-side
+key. Supabase labels that key **service_role** in older projects and **Secret
+key** in newer ones — it is the same thing, and it is *not* the anon /
+publishable key. The backend accepts it under either
+`SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`; set whichever you
+prefer, just one of them.
+
+This key bypasses Row Level Security, so it belongs only in the backend's
+environment — never in frontend code, and never committed.
+
+If it is missing or misspelled the server does not fail loudly: it starts in
+read-only JSON mode instead. The startup log names exactly which variable it
+could not find, so check there first if uploads or the teacher list look
+empty.
 
 ### 2. Backend
 
@@ -83,7 +93,7 @@ Runs on `http://localhost:4000`.
 | --- | --- |
 | `TYPHOON_API_KEY` | OCR and chat. Get one at [playground.opentyphoon.ai](https://playground.opentyphoon.ai/settings/api-key) |
 | `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only. Bypasses RLS |
+| `SUPABASE_SERVICE_ROLE_KEY`<br>(or `SUPABASE_SECRET_KEY`) | The server-side key. Bypasses RLS — server-only. Set one or the other |
 | `ADMIN_TOKENS` | `name:token` pairs, comma separated. Admin routes refuse everything while empty |
 | `ALLOWED_ORIGINS` | Comma-separated origins allowed in production |
 | `APP_TIMEZONE` | Defaults to `Asia/Bangkok` |

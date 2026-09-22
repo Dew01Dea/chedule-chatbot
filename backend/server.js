@@ -4,6 +4,7 @@ const cors = require("cors");
 const multer = require("multer");
 
 const store = require("./store");
+const { getServiceKey } = require("./lib/supabaseClient");
 const scheduleRoutes = require("./routes/schedule");
 const chatRoutes = require("./routes/chat");
 const teacherRoutes = require("./routes/teachers");
@@ -79,7 +80,17 @@ if (require.main === module) {
       console.warn("WARNING: TYPHOON_API_KEY is not set. Copy .env.example to .env and add your key.");
     }
     if (!store.isMultiTeacher) {
-      console.warn("WARNING: Supabase is not configured; running read-only against data/schedule.json.");
+      // Name the missing half, since the usual cause is a misnamed variable
+      // rather than a deliberate choice to run without a database.
+      const missing = [
+        !process.env.SUPABASE_URL && "SUPABASE_URL",
+        !getServiceKey() && "SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_SECRET_KEY)",
+      ].filter(Boolean);
+
+      console.warn(
+        `WARNING: Supabase is not configured (missing: ${missing.join(", ")}); ` +
+          "running read-only against data/schedule.json. Multiple teachers and uploads are unavailable."
+      );
     }
     if (!process.env.ADMIN_TOKENS) {
       console.warn("WARNING: ADMIN_TOKENS is not set; all admin endpoints will refuse requests.");

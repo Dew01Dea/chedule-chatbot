@@ -651,3 +651,39 @@ body {
   gap: 12px;
   flex-wrap: wrap;
 }
+
+/* Way into the admin console. Prominent when nothing is published yet —
+   that is a new install's first screen and there is nowhere else to go —
+   and quiet once teachers exist. */
+
+.picker-admin-cta {
+  display: block;
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: var(--indigo);
+  color: #f2efe8;
+  border-radius: 10px;
+  text-align: center;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.picker-admin-cta:hover {
+  background: var(--indigo-soft);
+}
+
+.picker-admin-link {
+  display: inline-block;
+  margin-top: 18px;
+  color: #6b7280;
+  font-size: 0.8rem;
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 2px;
+}
+
+.picker-admin-link:hover {
+  color: var(--teal);
+  border-bottom-color: var(--teal);
+}

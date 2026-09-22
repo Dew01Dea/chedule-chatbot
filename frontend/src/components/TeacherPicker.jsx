@@ -45,17 +45,25 @@ export default function TeacherPicker({ onSelect }) {
       <div className="picker-card">
         <h1 className="picker-title">เลือกอาจารย์</h1>
         <p className="picker-status picker-status--error">{error}</p>
+        <a className="picker-admin-link" href="#admin">
+          ไปหน้าผู้ดูแล
+        </a>
       </div>
     );
   }
 
+  // Nothing published yet is the state a new install starts in, so this is
+  // exactly where the way into the admin console has to be offered.
   if (teachers.length === 0) {
     return (
       <div className="picker-card">
-        <h1 className="picker-title">เลือกอาจารย์</h1>
+        <h1 className="picker-title">ยังไม่มีตารางสอนในระบบ</h1>
         <p className="picker-status">
-          ยังไม่มีอาจารย์ที่มีตารางสอนเผยแพร่แล้ว ผู้ดูแลระบบต้องอัปโหลดและตรวจสอบตารางสอนก่อน
+          ต้องเพิ่มอาจารย์ อัปโหลดไฟล์ PDF ตารางสอน แล้วตรวจสอบก่อน จึงจะเริ่มถามคำถามได้
         </p>
+        <a className="picker-admin-cta" href="#admin">
+          ไปหน้าผู้ดูแล เพื่อเพิ่มตารางสอน
+        </a>
       </div>
     );
   }
@@ -82,6 +90,10 @@ export default function TeacherPicker({ onSelect }) {
           </li>
         ))}
       </ul>
+
+      <a className="picker-admin-link" href="#admin">
+        ผู้ดูแลระบบ · เพิ่ม/แก้ไขตารางสอน
+      </a>
     </div>
   );
 }

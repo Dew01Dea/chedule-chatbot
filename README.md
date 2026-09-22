@@ -128,6 +128,22 @@ The script never writes to or deletes `schedule.json` — it stays as a backup �
 and running it twice reports "already migrated" rather than duplicating
 anything.
 
+### 3b. Checking the setup
+
+If something is not working — the teacher list is empty, or the admin console
+refuses your token — run:
+
+```bash
+cd backend
+node scripts/check-setup.js
+```
+
+It reports what is configured and what is not, and what to do about each. It
+prints no secret values. The two failures it exists for are both quiet ones: a
+missing Supabase key leaves the server in read-only mode rather than erroring,
+and an unreadable `ADMIN_TOKENS` refuses every admin request while the startup
+log still looks healthy.
+
 ### 4. Frontend
 
 ```bash

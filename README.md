@@ -1,68 +1,118 @@
 # ตารางสอน Chatbot — Thai Teacher Schedule Assistant
 
-A chatbot that answers questions about a teacher's class schedule, extracted
-from a Thai-language PDF and powered end-to-end by Typhoon — a model family
+A chatbot that answers questions about teachers' class schedules, extracted
+from Thai-language PDFs and powered end-to-end by Typhoon — a model family
 built specifically for Thai OCR and Thai conversation.
+
+It supports many teachers. A user picks a teacher, and answers come only from
+that teacher's published schedule.
 
 ## How it works
 
 ```
-PDF upload → rendered to page images (poppler) → Typhoon OCR reads the Thai
-text/table layout → raw markdown → Typhoon's instruct model structures it
-into schema JSON → stored in data/schedule.json → chat endpoint injects that
-JSON as context → Typhoon's instruct model answers questions grounded only
-in that data
+admin picks a teacher + term
+  → uploads a schedule PDF
+  → rendered to page images (poppler)
+  → Typhoon OCR reads the Thai text/table layout  → raw markdown
+  → Typhoon's instruct model structures it        → schema JSON
+  → validator checks it                           → errors / warnings
+  → stored as a DRAFT (the live schedule keeps serving)
+  → admin reviews it beside the original PDF, fixes what OCR got wrong
+  → admin publishes  → the previous version is archived, not deleted
+
+user picks a teacher → asks a question
+  → backend loads ONLY that teacher's published schedule
+  → Typhoon's instruct model answers from that data alone
 ```
 
 Two Typhoon models, two jobs:
 
-- **Typhoon OCR** (`typhoon-ocr`) reads the actual Thai document — it's
-  purpose-built for Thai OCR and handles tone marks, stacked vowels, and
-  merged table cells more reliably than general OCR engines.
-- **Typhoon's instruct model** (`typhoon-v2.5-30b-a3b-instruct`) does two
-  things: it structures Typhoon OCR's raw markdown into the schema JSON
-  (a one-time step per PDF upload), and it handles live chat — since your
-  users mostly type in Thai, it's tuned specifically for natural, fluent
-  Thai conversation.
+- **Typhoon OCR** (`typhoon-ocr`) reads the actual Thai document — purpose-built
+  for Thai OCR, handling tone marks, stacked vowels and merged table cells more
+  reliably than general OCR engines.
+- **Typhoon's instruct model** (`typhoon-v2.5-30b-a3b-instruct`) structures the
+  raw markdown into schema JSON, and handles live chat.
 
-Two backend endpoints do the work:
+## Requirements
 
-- `POST /api/schedule/extract` — upload a schedule PDF. It's rasterized to
-  page images, each page is OCR'd by Typhoon, and the combined markdown is
-  passed to Typhoon's instruct model to produce structured JSON, saved to
-  `data/schedule.json`.
-- `POST /api/chat` — takes a user's question, loads the stored schedule JSON,
-  and asks Typhoon's instruct model to answer using only that data (no
-  hallucinated classes), in whichever language the user asked in.
-
-### System requirement: poppler
-
-PDF pages are rendered to images with poppler's `pdftoppm` before OCR. Install it:
-
-- **macOS**: `brew install poppler`
-- **Ubuntu/Debian**: `sudo apt-get install poppler-utils`
-- **Windows**: download poppler for Windows and add its `bin` folder to your PATH
-  (e.g. via [this build](https://github.com/oschwartz10612/poppler-windows/releases))
-
-The repo already ships with `backend/data/schedule.json` pre-filled from your
-uploaded `ตารางสอน.pdf`, so the chat works immediately without re-uploading.
+- **Node.js 20+** (the tests use the built-in test runner).
+- **poppler** — PDF pages are rasterised with `pdftoppm` before OCR.
+  - macOS: `brew install poppler`
+  - Ubuntu/Debian: `sudo apt-get install poppler-utils`
+  - Windows: install poppler and add its `bin` folder to PATH
+    ([builds here](https://github.com/oschwartz10612/poppler-windows/releases))
+- **A Supabase project** for multi-teacher support (see below).
 
 ## Setup
 
-### 1. Backend
+### 1. Supabase
+
+Create a project, then in the SQL editor run:
+
+```
+supabase/migrations/20260922120000_schedule_chatbot_schema.sql
+```
+
+That creates the tables, constraints, RLS policies and the private
+`schedule-pdfs` storage bucket. It is safe to run more than once.
+
+From **Project Settings → API** you need the project URL and the
+**service_role** key. The service role key bypasses Row Level Security, so it
+belongs only in the backend's environment — never in frontend code, and never
+committed.
+
+### 2. Backend
 
 ```bash
 cd backend
 npm install
 cp .env.example .env
-# edit .env and add TYPHOON_API_KEY
-# (get one from https://playground.opentyphoon.ai/settings/api-key)
+# fill in the values described below
 npm run dev
 ```
 
 Runs on `http://localhost:4000`.
 
-### 2. Frontend
+| Variable | Purpose |
+| --- | --- |
+| `TYPHOON_API_KEY` | OCR and chat. Get one at [playground.opentyphoon.ai](https://playground.opentyphoon.ai/settings/api-key) |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only. Bypasses RLS |
+| `ADMIN_TOKENS` | `name:token` pairs, comma separated. Admin routes refuse everything while empty |
+| `ALLOWED_ORIGINS` | Comma-separated origins allowed in production |
+| `APP_TIMEZONE` | Defaults to `Asia/Bangkok` |
+| `PORT` | Defaults to 4000 |
+
+Generate an admin token with:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Then set e.g. `ADMIN_TOKENS=somchai:<token>`. The name is recorded against
+schedules that person publishes and rows they correct.
+
+**Without Supabase configured** the server still starts, in a read-only
+fallback mode serving the single schedule in `backend/data/schedule.json`. That
+keeps an existing checkout working, but multiple teachers, uploads and the
+review flow all need the database.
+
+### 3. Importing the existing schedule
+
+`backend/data/schedule.json` holds one teacher's real timetable. To bring it
+into Supabase:
+
+```bash
+cd backend
+node scripts/migrate-schedule-json.js --dry-run   # check first, no DB needed
+node scripts/migrate-schedule-json.js
+```
+
+The script never writes to or deletes `schedule.json` — it stays as a backup —
+and running it twice reports "already migrated" rather than duplicating
+anything.
+
+### 4. Frontend
 
 ```bash
 cd frontend
@@ -70,65 +120,107 @@ npm install
 npm run dev
 ```
 
-Runs on `http://localhost:5173` and proxies `/api` calls to the backend.
+Runs on `http://localhost:5173` and proxies `/api` to the backend.
+
+- `/` — pick a teacher, then chat
+- `/#admin` — the admin console (asks for an admin token)
+
+## Tests
+
+```bash
+cd backend
+npm test
+```
+
+47 tests covering validation rules, teacher naming, API scoping, admin
+authorisation and upload handling. They use stubs for the database and for
+Typhoon, so no network or API key is needed.
+
+There is also a SQL test of the publish/replace flow, run against a database
+with the schema applied:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/publish_flow.sql
+```
+
+It rolls back, so it is safe against a database with data in it.
+
+## How multiple teachers stay separated
+
+- `/api/chat` requires a `teacherId` and resolves it server-side. The query
+  filters on that teacher and `status = 'published'`, so a draft or another
+  teacher's timetable cannot come back. The model is never asked to work out
+  who is meant.
+- A partial unique index allows at most one *published* schedule per teacher
+  per term. Drafts for the same term are allowed, which is what lets a
+  replacement be prepared and reviewed while the current one keeps serving.
+- Publishing archives the schedule it replaces rather than deleting it.
+- Uploads are keyed by a SHA-256 of the file, so the same PDF cannot be
+  processed twice for one teacher.
+- PDFs live in a private bucket namespaced by teacher, reached through
+  short-lived signed URLs.
+
+## Validation before anything is published
+
+`backend/services/scheduleValidator.js` first repairs what OCR reliably gets
+almost right — Thai numerals, `09.00` for `09:00`, a stray `วัน` prefix, `ป.`
+for `ปฏิบัติ` — and records each repair for the reviewer. What is left is
+checked, and findings are split by what they imply:
+
+- **Errors block publishing**: unreadable output, no sessions at all, a
+  malformed or reversed time, an unknown weekday, a subject code absent from
+  the document's own subject list, or two sessions overlapping on one day.
+- **Warnings route the row to a reviewer**: a missing room or group, a
+  duplicated row, an implausible hour, an unusually long session.
+
+OCR confidence is deliberately not an input — a confidently misread room is
+still wrong — so rows are judged on the data's internal consistency.
 
 ## Thai date & holiday awareness
 
-The chatbot has no internal clock, so "today" is computed on the **backend**
-(`services/dateService.js`) on every request and injected into the prompt —
-the model never guesses it. This is what fixes questions like "วันนี้วันอะไร".
+The chatbot has no clock, so "today" is computed on the backend
+(`services/dateService.js`) on every request and injected into the prompt.
+Everything is derived from one timezone-aware breakdown, defaulting to
+`Asia/Bangkok`.
 
-For holidays, `backend/data/holidays-2569.json` holds the official Thai
-government holiday calendar for B.E. 2569 (2026), including compensatory
-("ชดเชย") days. On every chat request, the backend filters this list down to
-the semester's date range (if set — see below) and hands it to the model, so
-"เทอมนี้หยุดวันไหนบ้าง" is answered from real data instead of hallucination.
+`backend/data/holidays-2569.json` holds the official Thai government holiday
+calendar for B.E. 2569 (2026), including compensatory ("ชดเชย") days. On each
+chat request the backend filters it to the semester's date range and hands it
+to the model.
 
-**Important caveat**: this is the *national government* holiday calendar
-(วันหยุดราชการ), not your college's specific mid-term break or special closure
-days — those aren't public data and need to be added by hand. To scope
-holiday answers precisely to one semester (rather than "today through Dec
-31st"), fill in `semesterStartDate` and `semesterEndDate` (format `YYYY-MM-DD`)
-in `backend/data/schedule.json` — pull them from the college's official
-academic calendar since vocational college (สอศ.) terms often run on a
-different schedule than general schools (สพฐ.).
+**Caveat**: this is the *national government* calendar (วันหยุดราชการ), not a
+college's own mid-term break or special closures. To scope holiday answers to
+one semester, set `semester_start_date` and `semester_end_date` on the
+schedule row from the college's official academic calendar — vocational
+(สอศ.) terms often differ from general school (สพฐ.) terms.
 
-If you need a future year's holidays too, add another file like
-`holidays-2570.json` (same shape) and register it in the `HOLIDAY_FILES` map
-at the top of `dateService.js`.
+For a future year, add e.g. `holidays-2570.json` in the same shape and register
+it in the `HOLIDAY_FILES` map in `dateService.js`.
 
-## Uploading a new/different schedule PDF
+## API
 
+### Public
 
-From the frontend you'd add a small upload button that POSTs to
-`/api/schedule/extract` as `multipart/form-data` with field name
-`schedulePdf`, e.g.:
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/teachers` | Teachers with a published schedule |
+| `POST` | `/api/chat` | `{ message, teacherId, academicYear?, semester? }` |
+| `GET` | `/api/schedule?teacherId=` | One teacher's published schedule |
+| `GET` | `/api/health` | Status and which store is active |
 
-```js
-const formData = new FormData();
-formData.append("schedulePdf", file);
-await fetch("/api/schedule/extract", { method: "POST", body: formData });
-```
+### Admin (require `Authorization: Bearer <token>`)
 
-I left this out of the UI since you said the schedule is fixed for now — say
-the word and I'll add an upload screen (e.g. for an admin view where the
-teacher swaps in a new semester's PDF).
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/teachers/all` | Every teacher, including unpublished |
+| `POST` | `/api/teachers` | Add a teacher |
+| `PATCH` | `/api/teachers/:id` | Edit a teacher |
+| `POST` | `/api/admin/schedules/upload` | Upload a PDF (multipart `schedulePdf`) |
+| `GET` | `/api/admin/teachers/:id/schedules` | All versions, any status |
+| `GET` | `/api/admin/schedules/:id` | A draft plus outstanding issues |
+| `PATCH` | `/api/admin/schedules/:id/entries/:entryId` | Correct one row |
+| `POST` | `/api/admin/schedules/:id/publish` | Publish, archiving what it replaces |
 
-## Notes on accuracy
-
-- Typhoon OCR is trained specifically on Thai documents, so it should handle
-  tone marks, stacked vowels, and mixed Thai/English/number cells (like
-  "สท.4/1-2 (39)") more reliably than a general-purpose OCR or vision model.
-- The structuring step is told to reconcile OCR quirks like duplicated text
-  from merged table cells — but for a brand-new PDF, it's worth checking
-  `schedule.json` once after extraction to confirm nothing got merged wrong.
-- The chat prompt explicitly tells the model to only use the stored schedule
-  data and say so if something isn't in it, to avoid invented answers.
-- Since `data/schedule.json` is a plain file, it's easy to inspect or hand-edit
-  if you ever spot an extraction mistake — no database needed for one teacher's
-  schedule.
-- If you later want this for multiple teachers, swap `schedule.json` for a
-  small per-teacher JSON file or a SQLite table — the two endpoints don't need
-  to change much.
-- Only one API key is needed now (`TYPHOON_API_KEY`) — the whole pipeline runs
-  on Typhoon, no other provider involved.
+`POST /api/schedule/extract` from the previous version is gone. It accepted a
+PDF from anyone and overwrote the live schedule; it now answers `410` pointing
+at the authenticated replacement.

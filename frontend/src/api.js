@@ -9,6 +9,21 @@
 
 const ADMIN_TOKEN_KEY = "schedule-admin-token";
 
+/**
+ * Where the backend lives.
+ *
+ * In dev this stays empty: Vite proxies /api to localhost:4000, so a relative
+ * path is both correct and same-origin. In production the frontend is a static
+ * bundle on one host and the backend runs on another, so the build is given
+ * VITE_API_BASE_URL and every path is prefixed with it. A trailing slash there
+ * is easy to leave in by accident and would produce //api, so it is trimmed.
+ */
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+
+function url(path) {
+  return `${API_BASE}${path}`;
+}
+
 export function getAdminToken() {
   try {
     return sessionStorage.getItem(ADMIN_TOKEN_KEY) || "";
@@ -46,7 +61,7 @@ async function request(path, { admin = false, headers = {}, ...options } = {}) {
 
   let response;
   try {
-    response = await fetch(path, { ...options, headers: finalHeaders });
+    response = await fetch(url(path), { ...options, headers: finalHeaders });
   } catch {
     throw new ApiError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบว่า backend กำลังทำงานอยู่", "NETWORK", 0);
   }

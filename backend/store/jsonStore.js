@@ -81,4 +81,11 @@ module.exports = {
   updateEntry: unsupported("Editing an entry"),
   publishSchedule: unsupported("Publishing a schedule"),
   findDocumentByChecksum: async () => null,
+  summariseTeacherContents: unsupported("Inspecting a teacher"),
+  deleteTeacher: unsupported("Deleting a teacher"),
+  deleteSchedule: unsupported("Deleting a schedule"),
+  unpublishSchedule: unsupported("Unpublishing a schedule"),
+  updateScheduleMeta: unsupported("Editing a schedule"),
+  addEntry: unsupported("Adding an entry"),
+  deleteEntry: unsupported("Deleting an entry"),
 };

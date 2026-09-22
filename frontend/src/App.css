@@ -287,108 +287,153 @@ body {
 
 /* --------------------------------------------------------------------------
    Admin console
+
+   Laid out as one view at a time: a list, a detail, a review screen. Panels
+   carry the grouping, so borders and fills are spent on separating sections
+   rather than on decorating every element.
    -------------------------------------------------------------------------- */
 
 .app-shell--wide {
   align-items: flex-start;
   justify-content: center;
+  padding: 24px 16px 64px;
 }
 
 .admin-shell {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1240px;
   display: grid;
-  gap: 18px;
+  gap: 16px;
+  align-content: start;
 }
 
 .admin-header {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
-}
-
-.admin-header__actions {
-  display: flex;
-  gap: 8px;
-}
-
-.admin-card {
-  background: #ffffff;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 22px;
-}
-
-.admin-card--narrow {
-  max-width: 460px;
-  margin: 0 auto;
+  padding-bottom: 4px;
 }
 
 .admin-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   color: var(--indigo);
+  letter-spacing: -0.01em;
 }
 
-.admin-subtitle {
+/* --- panels --------------------------------------------------------------- */
+
+.panel {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.panel--narrow {
+  max-width: 440px;
+  margin: 40px auto 0;
+}
+
+.panel--inset {
+  background: var(--paper);
+  border-style: dashed;
+}
+
+.panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.panel__title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.02rem;
+  font-weight: 600;
   color: var(--indigo);
 }
 
-.admin-hint {
-  margin: 6px 0 0;
-  font-size: 0.82rem;
+.panel__subtitle {
+  margin: 4px 0 0;
+  font-size: 0.83rem;
   color: #6b7280;
   line-height: 1.6;
 }
 
-.admin-error {
-  margin: 12px 0 0;
-  padding: 10px 12px;
-  background: #fef3f2;
-  border: 1px solid #fecdca;
-  border-radius: 8px;
-  color: #b42318;
-  font-size: 0.85rem;
+.back-link {
+  justify-self: start;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font: inherit;
+  font-size: 0.86rem;
+  color: var(--teal);
+  cursor: pointer;
 }
 
-.admin-notice {
-  margin: 12px 0 0;
-  padding: 10px 12px;
-  background: #ecfdf3;
-  border: 1px solid #abefc6;
-  border-radius: 8px;
-  color: #067647;
-  font-size: 0.85rem;
+.back-link:hover {
+  text-decoration: underline;
 }
 
-.admin-form {
-  margin-top: 14px;
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--teal);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.empty-note {
+  margin: 0;
+  padding: 18px;
+  background: var(--paper);
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  font-size: 0.87rem;
+  color: #6b7280;
+  line-height: 1.7;
+}
+
+/* --- forms ---------------------------------------------------------------- */
+
+.field-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
 }
 
-.admin-form--grid {
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  align-items: end;
-}
-
-.admin-form__actions {
-  display: flex;
-  gap: 8px;
-}
-
-.admin-field {
+.field {
   display: grid;
   gap: 5px;
-  font-size: 0.82rem;
+  align-content: start;
+}
+
+.field--wide {
+  grid-column: 1 / -1;
+}
+
+.field__label {
+  font-size: 0.8rem;
+  font-weight: 500;
   color: #4b5563;
 }
 
-.admin-input {
+.field__hint {
+  font-size: 0.74rem;
+  color: #9ca3af;
+}
+
+.input {
+  width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 9px 11px;
@@ -398,24 +443,39 @@ body {
   color: var(--ink);
 }
 
-.admin-input:focus {
+.input:focus-visible {
   outline: 2px solid var(--teal);
   outline-offset: -1px;
 }
+
+.button-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.button-row--stack {
+  display: grid;
+  gap: 8px;
+}
+
+/* --- buttons -------------------------------------------------------------- */
 
 .admin-button {
   background: var(--indigo);
   color: #f2efe8;
   border: 1px solid var(--indigo);
   border-radius: 8px;
-  padding: 9px 16px;
-  font-size: 0.88rem;
+  padding: 9px 15px;
+  font-size: 0.87rem;
   font-family: inherit;
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
 }
 
 .admin-button:hover:not(:disabled) {
@@ -423,8 +483,13 @@ body {
 }
 
 .admin-button:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
+}
+
+.admin-button:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
 }
 
 .admin-button--ghost {
@@ -438,73 +503,175 @@ body {
   border-color: var(--teal);
 }
 
-.admin-button--small {
-  padding: 5px 10px;
-  font-size: 0.78rem;
+/* Destructive actions must not look like the primary action beside them. */
+.admin-button--danger {
+  background: #b42318;
+  border-color: #b42318;
 }
 
-.admin-result {
-  margin-top: 16px;
-  padding: 14px;
+.admin-button--danger:hover:not(:disabled) {
+  background: #912018;
+}
+
+.admin-button--danger-ghost {
+  background: transparent;
+  color: #b42318;
+  border-color: #fecdca;
+}
+
+.admin-button--danger-ghost:hover:not(:disabled) {
+  background: #fef3f2;
+  border-color: #b42318;
+}
+
+.admin-button--small {
+  padding: 6px 11px;
+  font-size: 0.79rem;
+}
+
+.icon-button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #9ca3af;
+}
+
+.icon-button--danger:hover {
+  background: #fef3f2;
+  border-color: #fecdca;
+  color: #b42318;
+}
+
+/* --- alerts --------------------------------------------------------------- */
+
+.alert {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  display: grid;
+  gap: 6px;
+}
+
+.alert--error {
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  color: #b42318;
+}
+
+.alert--ok {
+  background: #ecfdf3;
+  border: 1px solid #abefc6;
+  color: #067647;
+}
+
+.alert--info {
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  font-size: 0.88rem;
+  color: var(--ink);
 }
 
-.admin-result__counts {
+.alert__hint {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.result-counts {
   display: flex;
-  gap: 16px;
-  list-style: none;
-  padding: 0;
-  margin: 10px 0;
-  font-size: 0.82rem;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
   color: #4b5563;
 }
 
-.admin-teacher-list,
-.admin-schedule-list {
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
-  display: grid;
-  gap: 10px;
+.admin-code {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 5px;
+  word-break: break-all;
 }
 
-.admin-teacher {
+/* --- cards ---------------------------------------------------------------- */
+
+.card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.teacher-card,
+.schedule-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 12px 14px;
+  background: #ffffff;
 }
 
-.admin-teacher__head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+.teacher-card:hover {
+  border-color: var(--teal);
 }
 
-.admin-teacher__name {
-  font-weight: 600;
-}
-
-.admin-teacher__meta {
-  font-size: 0.8rem;
-  color: #6b7280;
+.teacher-card__main {
   flex: 1;
+  min-width: 180px;
+  display: grid;
+  gap: 3px;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
 }
 
-.admin-schedule-list {
-  margin-top: 12px;
-  padding-left: 4px;
+.teacher-card__name {
+  font-weight: 600;
+  color: var(--ink);
 }
 
-.admin-schedule {
+.teacher-card__meta,
+.schedule-card__meta {
+  font-size: 0.79rem;
+  color: #6b7280;
+}
+
+.teacher-card__actions,
+.schedule-card__actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.schedule-card__info {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 0.85rem;
+  gap: 10px;
   flex-wrap: wrap;
+  flex: 1;
+  min-width: 200px;
+}
+
+.schedule-card__term {
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
 .status-pill {
@@ -514,6 +681,7 @@ body {
   border: 1px solid var(--line);
   background: var(--paper);
   color: #4b5563;
+  white-space: nowrap;
 }
 
 .status-pill--published {
@@ -532,24 +700,22 @@ body {
   color: #9ca3af;
 }
 
-/* Review screen: PDF beside the extracted rows. */
-
-.review-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
+/* --- review screen -------------------------------------------------------- */
 
 .review-split {
-  margin-top: 16px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
   gap: 16px;
+  align-items: start;
 }
 
-@media (max-width: 900px) {
+/* With the PDF hidden — or absent — the table takes the whole width, which is
+   what makes the rightmost columns and the row actions reachable. */
+.review-split--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 960px) {
   .review-split {
     grid-template-columns: 1fr;
   }
@@ -557,7 +723,7 @@ body {
 
 .review-pdf__frame {
   width: 100%;
-  height: 520px;
+  height: 560px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--paper);
@@ -565,7 +731,7 @@ body {
 
 .review-table-wrap {
   overflow-x: auto;
-  max-height: 520px;
+  max-height: 560px;
   overflow-y: auto;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -574,7 +740,7 @@ body {
 .review-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.82rem;
+  font-size: 0.81rem;
 }
 
 .review-table th {
@@ -586,12 +752,13 @@ body {
   font-weight: 600;
   border-bottom: 1px solid var(--line);
   z-index: 1;
+  white-space: nowrap;
 }
 
 .review-table td {
-  padding: 5px 6px;
+  padding: 4px 5px;
   border-bottom: 1px solid #f1ece2;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 .entry-row--error td {
@@ -602,33 +769,51 @@ body {
   background: #fffaeb;
 }
 
+/* An unsaved edit is easy to walk away from, so mark it. */
+.entry-row--dirty td {
+  box-shadow: inset 2px 0 0 var(--teal);
+}
+
+.entry-row--new td {
+  background: var(--paper);
+}
+
 .entry-input {
   width: 100%;
-  min-width: 82px;
+  min-width: 72px;
   border: 1px solid transparent;
   border-radius: 6px;
   padding: 5px 6px;
-  font-size: 0.82rem;
+  font-size: 0.81rem;
   font-family: inherit;
-  background: #ffffff;
+  background: transparent;
   color: var(--ink);
 }
 
 .entry-input:hover {
   border-color: var(--line);
+  background: #ffffff;
 }
 
-.entry-input:focus {
+.entry-input:focus-visible {
   outline: none;
   border-color: var(--teal);
+  background: #ffffff;
 }
 
 .entry-input--time {
-  min-width: 64px;
+  min-width: 58px;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  white-space: nowrap;
 }
 
 .entry-issues {
-  padding: 4px 8px 9px;
+  padding: 3px 8px 8px;
 }
 
 .entry-issue {
@@ -644,17 +829,70 @@ body {
   color: #b54708;
 }
 
-.review-actions {
-  margin-top: 16px;
+.publish-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  position: sticky;
+  bottom: 12px;
+  box-shadow: 0 10px 30px -18px rgba(31, 42, 68, 0.5);
+}
+
+/* --- confirmation dialog -------------------------------------------------- */
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 42, 68, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 50;
+}
+
+.dialog {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 22px;
+  width: 100%;
+  max-width: 440px;
+  display: grid;
+  gap: 10px;
+  box-shadow: 0 28px 60px -30px rgba(31, 42, 68, 0.6);
+}
+
+.dialog__title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--indigo);
+}
+
+.dialog__message {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--ink);
+}
+
+.dialog__detail {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
   flex-wrap: wrap;
 }
 
-/* Way into the admin console. Prominent when nothing is published yet —
-   that is a new install's first screen and there is nowhere else to go —
-   and quiet once teachers exist. */
+/* --- picker entry points (chat side) -------------------------------------- */
 
 .picker-admin-cta {
   display: block;
@@ -686,20 +924,4 @@ body {
 .picker-admin-link:hover {
   color: var(--teal);
   border-bottom-color: var(--teal);
-}
-
-.admin-code {
-  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 0.82em;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  padding: 1px 5px;
-  word-break: break-all;
-}
-
-/* Error text can carry a technical detail line; keep its formatting. */
-.admin-error {
-  white-space: pre-wrap;
-  word-break: break-word;
 }

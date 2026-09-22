@@ -195,6 +195,86 @@ router.patch("/schedules/:scheduleId/entries/:entryId", async (req, res) => {
 });
 
 /**
+ * PATCH /api/admin/schedules/:scheduleId
+ * Edits the schedule's own fields (term, dates, college), not its rows.
+ */
+router.patch("/schedules/:scheduleId", async (req, res) => {
+  try {
+    const updated = await store.updateScheduleMeta(req.params.scheduleId, req.body || {});
+    if (!updated) return sendError(res, 404, "SCHEDULE_NOT_FOUND", "ไม่พบตารางสอนนี้");
+    res.json({ schedule: updated });
+  } catch (error) {
+    handleRouteError(res, error, "PATCH /api/admin/schedules/:id", { detailed: true });
+  }
+});
+
+/**
+ * POST /api/admin/schedules/:scheduleId/entries
+ * Adds a row by hand, for the ones OCR missed entirely.
+ */
+router.post("/schedules/:scheduleId/entries", async (req, res) => {
+  try {
+    const entry = await store.addEntry(req.params.scheduleId, {
+      ...(req.body || {}),
+      editedBy: req.admin.name,
+    });
+    if (!entry) return sendError(res, 404, "SCHEDULE_NOT_FOUND", "ไม่พบตารางสอนนี้");
+    res.status(201).json({ entry });
+  } catch (error) {
+    handleRouteError(res, error, "POST /api/admin/schedules/:id/entries", { detailed: true });
+  }
+});
+
+/** DELETE /api/admin/schedules/:scheduleId/entries/:entryId */
+router.delete("/schedules/:scheduleId/entries/:entryId", async (req, res) => {
+  try {
+    const deleted = await store.deleteEntry(req.params.scheduleId, req.params.entryId);
+    // Also covers an entry id belonging to a different schedule.
+    if (!deleted) return sendError(res, 404, "ENTRY_NOT_FOUND", "ไม่พบรายการคาบสอนนี้");
+    res.json({ deleted: { id: deleted.id } });
+  } catch (error) {
+    handleRouteError(res, error, "DELETE /api/admin/schedules/:id/entries/:entryId", { detailed: true });
+  }
+});
+
+/**
+ * DELETE /api/admin/schedules/:scheduleId
+ *
+ * A published schedule is the one the chatbot answers from, so deleting it
+ * takes that teacher offline. That is allowed, but only when asked for
+ * explicitly with ?confirmPublished=true, so it cannot happen by reflex.
+ */
+router.delete("/schedules/:scheduleId", async (req, res) => {
+  try {
+    const deleted = await store.deleteSchedule(req.params.scheduleId, {
+      allowPublished: req.query.confirmPublished === "true",
+    });
+    if (!deleted) return sendError(res, 404, "SCHEDULE_NOT_FOUND", "ไม่พบตารางสอนนี้");
+
+    res.json({ deleted, message: "ลบตารางสอนเรียบร้อยแล้ว" });
+  } catch (error) {
+    handleRouteError(res, error, "DELETE /api/admin/schedules/:id", { detailed: true });
+  }
+});
+
+/**
+ * POST /api/admin/schedules/:scheduleId/unpublish
+ * Takes a schedule out of service without destroying it — usually what is
+ * wanted when the reflex is to delete.
+ */
+router.post("/schedules/:scheduleId/unpublish", async (req, res) => {
+  try {
+    const result = await store.unpublishSchedule(req.params.scheduleId);
+    if (!result) {
+      return sendError(res, 409, "NOT_PUBLISHED", "ตารางสอนนี้ไม่ได้อยู่ในสถานะเผยแพร่");
+    }
+    res.json({ schedule: result, message: "หยุดเผยแพร่แล้ว ข้อมูลยังเก็บไว้" });
+  } catch (error) {
+    handleRouteError(res, error, "POST /api/admin/schedules/:id/unpublish", { detailed: true });
+  }
+});
+
+/**
  * POST /api/admin/schedules/:scheduleId/publish
  * Makes a reviewed schedule the live one, archiving what it replaces.
  */

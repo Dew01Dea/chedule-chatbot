@@ -118,6 +118,45 @@ export const api = {
         method: "POST",
         admin: true,
       }),
+
+    unpublish: (scheduleId) =>
+      request(`/api/admin/schedules/${encodeURIComponent(scheduleId)}/unpublish`, {
+        method: "POST",
+        admin: true,
+      }),
+
+    updateTeacher: (teacherId, patch) =>
+      request(`/api/teachers/${encodeURIComponent(teacherId)}`, json("PATCH", patch, true)),
+
+    // confirm is passed only once the person has agreed to what they were told
+    // would be lost; without it the server refuses and reports the scope.
+    deleteTeacher: (teacherId, { confirm = false } = {}) =>
+      request(
+        `/api/teachers/${encodeURIComponent(teacherId)}${confirm ? "?confirm=true" : ""}`,
+        { method: "DELETE", admin: true }
+      ),
+
+    deleteSchedule: (scheduleId, { confirmPublished = false } = {}) =>
+      request(
+        `/api/admin/schedules/${encodeURIComponent(scheduleId)}${
+          confirmPublished ? "?confirmPublished=true" : ""
+        }`,
+        { method: "DELETE", admin: true }
+      ),
+
+    updateSchedule: (scheduleId, patch) =>
+      request(`/api/admin/schedules/${encodeURIComponent(scheduleId)}`, json("PATCH", patch, true)),
+
+    addEntry: (scheduleId, entry) =>
+      request(`/api/admin/schedules/${encodeURIComponent(scheduleId)}/entries`, json("POST", entry, true)),
+
+    deleteEntry: (scheduleId, entryId) =>
+      request(
+        `/api/admin/schedules/${encodeURIComponent(scheduleId)}/entries/${encodeURIComponent(entryId)}`,
+        { method: "DELETE", admin: true }
+      ),
+
+    diagnostics: () => request("/api/admin/diagnostics", { admin: true }),
   },
 };
 

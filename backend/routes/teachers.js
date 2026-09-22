@@ -64,4 +64,40 @@ router.patch("/:teacherId", requireAdmin, async (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/teachers/:teacherId
+ *
+ * Removes the teacher and everything belonging to them — the database
+ * cascades to schedules, subjects, entries and documents. Because that is
+ * irreversible and its scope is not obvious from the button, it reports what
+ * would be lost and requires ?confirm=true to go ahead.
+ */
+router.delete("/:teacherId", requireAdmin, async (req, res) => {
+  try {
+    const teacher = await store.getTeacher(req.params.teacherId);
+    if (!teacher) return sendError(res, 404, "TEACHER_NOT_FOUND", "ไม่พบอาจารย์ที่ต้องการลบ");
+
+    const summary = await store.summariseTeacherContents(req.params.teacherId);
+
+    if (req.query.confirm !== "true") {
+      return sendError(
+        res,
+        409,
+        "DELETE_NEEDS_CONFIRM",
+        summary.scheduleCount === 0
+          ? `ยืนยันการลบอาจารย์ "${teacher.fullName}" หรือไม่`
+          : `การลบอาจารย์ "${teacher.fullName}" จะลบตารางสอน ${summary.scheduleCount} ชุด` +
+            `${summary.publishedCount > 0 ? ` (เผยแพร่อยู่ ${summary.publishedCount} ชุด)` : ""} ` +
+            "รวมทั้งคาบเรียนและไฟล์ PDF ทั้งหมดด้วย และกู้คืนไม่ได้",
+        { willDelete: summary }
+      );
+    }
+
+    const deleted = await store.deleteTeacher(req.params.teacherId);
+    res.json({ deleted, message: `ลบอาจารย์ "${teacher.fullName}" เรียบร้อยแล้ว` });
+  } catch (error) {
+    handleRouteError(res, error, "DELETE /api/teachers/:id", { detailed: true });
+  }
+});
+
 module.exports = router;

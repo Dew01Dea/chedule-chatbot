@@ -12,6 +12,11 @@ const USER_SAFE_MESSAGES = {
   SCHEDULE_NOT_FOUND: "ไม่พบตารางสอนที่เผยแพร่แล้วของอาจารย์ท่านนี้",
   PUBLISH_BLOCKED: "ยังมีข้อผิดพลาดที่ยังไม่ได้แก้ไข ไม่สามารถเผยแพร่ได้",
   ENTRY_INVALID: "แก้ไขคาบเรียนนี้ไม่สำเร็จ เพราะข้อมูลยังไม่ถูกต้อง",
+  ENTRY_NOT_FOUND: "ไม่พบรายการคาบสอนนี้",
+  TERM_CONFLICT: "มีตารางสอนที่เผยแพร่แล้วของภาคเรียนนี้อยู่ก่อนแล้ว",
+  NOT_PUBLISHED: "ตารางสอนนี้ไม่ได้อยู่ในสถานะเผยแพร่",
+  PUBLISHED_DELETE_NEEDS_CONFIRM:
+    "ตารางสอนนี้กำลังเผยแพร่อยู่ ถ้าลบแล้ว Chatbot จะไม่มีข้อมูลของอาจารย์ท่านนี้ตอบ — ยืนยันอีกครั้งเพื่อลบ",
   DUPLICATE_UPLOAD: "ไฟล์นี้เคยอัปโหลดไว้แล้ว",
   STORE_READ_ONLY: "ระบบยังไม่ได้เชื่อมต่อฐานข้อมูล จึงยังทำรายการนี้ไม่ได้",
   STRUCTURING_NOT_JSON: "อ่านตารางสอนจากไฟล์นี้ไม่สำเร็จ กรุณาตรวจสอบไฟล์แล้วลองใหม่",
@@ -65,7 +70,9 @@ function handleRouteError(res, error, context, options = {}) {
   const known = USER_SAFE_MESSAGES[error.code];
   if (known) {
     const status =
-      error.code === "TEACHER_EXISTS" || error.code === "DUPLICATE_UPLOAD"
+      error.code === "TEACHER_EXISTS" ||
+      error.code === "DUPLICATE_UPLOAD" ||
+      error.code === "PUBLISHED_DELETE_NEEDS_CONFIRM"
         ? 409
         : error.code === "TEACHER_NOT_FOUND" || error.code === "SCHEDULE_NOT_FOUND"
           ? 404

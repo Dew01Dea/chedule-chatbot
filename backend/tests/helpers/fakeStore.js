@@ -79,7 +79,9 @@ function createFakeStore() {
 
     async getScheduleForReview(id) {
       const schedule = schedules.get(id);
-      return schedule ? { ...schedule.document, id, issues: schedule.validation?.issues || [] } : null;
+      return schedule
+        ? { ...schedule.document, id, status: schedule.status, issues: schedule.validation?.issues || [] }
+        : null;
     },
 
     async updateEntry(scheduleId, entryId, patch) {
@@ -90,7 +92,100 @@ function createFakeStore() {
       if (!entry) return null;
 
       Object.assign(entry, patch);
+
+      // The real store marks that entry's validation issues resolved, which is
+      // what lets publishing become possible again. Mirror it, or the fake
+      // would keep reporting errors that no longer exist.
+      if (schedule.validation?.issues) {
+        schedule.validation.issues = schedule.validation.issues.filter(
+          (issue) => issue.entryId !== entryId
+        );
+      }
+
       return entry;
+    },
+
+    async summariseTeacherContents(teacherId) {
+      const owned = [...schedules.values()].filter((s) => s.teacherId === teacherId);
+      return {
+        scheduleCount: owned.length,
+        publishedCount: owned.filter((s) => s.status === "published").length,
+      };
+    },
+
+    async deleteTeacher(teacherId) {
+      const teacher = teachers.get(teacherId);
+      if (!teacher) return null;
+
+      const summary = {
+        scheduleCount: [...schedules.values()].filter((s) => s.teacherId === teacherId).length,
+        publishedCount: [...schedules.values()].filter(
+          (s) => s.teacherId === teacherId && s.status === "published"
+        ).length,
+      };
+
+      // Mirrors the database cascade.
+      for (const [id, schedule] of [...schedules.entries()]) {
+        if (schedule.teacherId === teacherId) schedules.delete(id);
+      }
+      teachers.delete(teacherId);
+
+      return { teacher, ...summary };
+    },
+
+    async deleteSchedule(scheduleId, { allowPublished = false } = {}) {
+      const schedule = schedules.get(scheduleId);
+      if (!schedule) return null;
+
+      if (schedule.status === "published" && !allowPublished) {
+        const blocked = new Error("Refusing to delete a published schedule without confirmation.");
+        blocked.code = "PUBLISHED_DELETE_NEEDS_CONFIRM";
+        throw blocked;
+      }
+
+      schedules.delete(scheduleId);
+      return { id: scheduleId, status: schedule.status };
+    },
+
+    async unpublishSchedule(scheduleId) {
+      const schedule = schedules.get(scheduleId);
+      if (!schedule || schedule.status !== "published") return null;
+      schedule.status = "archived";
+      return { id: scheduleId, status: "archived" };
+    },
+
+    async updateScheduleMeta(scheduleId, patch) {
+      const schedule = schedules.get(scheduleId);
+      if (!schedule) return null;
+      Object.assign(schedule, patch);
+      return { id: scheduleId, ...patch };
+    },
+
+    async addEntry(scheduleId, entry) {
+      const schedule = schedules.get(scheduleId);
+      if (!schedule) return null;
+      const created = { id: `entry-${Math.random().toString(36).slice(2, 8)}`, ...entry };
+      schedule.document.sessions = [...(schedule.document.sessions || []), created];
+      return created;
+    },
+
+    async deleteEntry(scheduleId, entryId) {
+      const schedule = schedules.get(scheduleId);
+      if (!schedule) return null;
+
+      const sessions = schedule.document.sessions || [];
+      const found = sessions.find((s) => s.id === entryId);
+      if (!found) return null;
+
+      schedule.document.sessions = sessions.filter((s) => s.id !== entryId);
+
+      if (schedule.validation?.issues) {
+        schedule.validation.issues = schedule.validation.issues.filter(
+          (issue) => issue.entryId !== entryId
+        );
+      }
+
+      return found;
     },
 
     async publishSchedule(id) {

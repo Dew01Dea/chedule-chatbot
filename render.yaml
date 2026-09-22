@@ -1,0 +1,31 @@
+# Render blueprint for the backend only. The frontend is a static bundle on
+# Vercel (see vercel.json) and talks to this service through VITE_API_BASE_URL.
+#
+# Any Docker host works the same way — Railway and Fly.io read backend/Dockerfile
+# just as well; this file only saves clicking the same settings in by hand.
+services:
+  - type: web
+    name: schedule-chatbot-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/health
+    envVars:
+      # sync: false means Render prompts for the value instead of storing it
+      # here, which is what keeps these out of the repository.
+      - key: TYPHOON_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      # The server-side key ("service_role" / "Secret key"), never the anon one.
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ADMIN_TOKENS
+        sync: false
+      # The deployed frontend's origin, e.g. https://your-app.vercel.app.
+      # Leaving this empty accepts every origin, which the server warns about
+      # on boot.
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: APP_TIMEZONE
+        value: Asia/Bangkok

@@ -176,6 +176,83 @@ Runs on `http://localhost:5173` and proxies `/api` to the backend.
 - `/` — pick a teacher, then chat
 - `/#admin` — the admin console (asks for an admin token)
 
+## Deployment
+
+The two halves are deployed separately, because they need different things from
+a host.
+
+The **frontend** is a static bundle, so it goes to Vercel. The **backend** does
+not: the OCR pipeline shells out to poppler's `pdftoppm` to rasterize each PDF
+page, and that binary cannot be installed into a Vercel serverless function.
+Uploads also run one Typhoon OCR call per page in sequence, which for a
+multi-page PDF comfortably exceeds Vercel's function time limit. So the backend
+runs as a container on a host that gives it a real filesystem and no request
+deadline — Render, Railway and Fly.io all work; `backend/Dockerfile` is what
+they build.
+
+### 1. Backend
+
+On Render, point a new Blueprint at this repository and it reads `render.yaml`,
+which builds `backend/Dockerfile` and prompts for each secret. By hand, on any
+Docker host, the settings are:
+
+| Setting | Value |
+| --- | --- |
+| Dockerfile | `backend/Dockerfile` |
+| Build context | `backend` |
+| Health check | `/api/health` |
+
+Set the same variables described in [Backend](#2-backend) above —
+`TYPHOON_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_TOKENS`
+and `APP_TIMEZONE`. Two behave differently in production:
+
+- `ALLOWED_ORIGINS` — set this to the deployed frontend's origin, e.g.
+  `https://your-app.vercel.app`. While it is empty the server accepts every
+  origin and says so in a boot warning.
+- `POPPLER_PATH` — leave it unset. The image installs `poppler-utils` into the
+  normal location, so `pdftoppm` is already on `PATH`.
+
+`PORT` is supplied by the host and read by `server.js`; there is no need to set
+it yourself.
+
+Confirm the deployment before moving on:
+
+```bash
+curl https://your-api-host/api/health
+# {"status":"ok","store":"supabase","multiTeacher":true}
+```
+
+A `store` of `json` there means Supabase did not configure — check the URL and
+that the key is the server-side one, not the anon key.
+
+### 2. Frontend
+
+Import the repository into Vercel. The root `vercel.json` already describes the
+build, so no framework settings need changing — it installs and builds inside
+`frontend/` and serves `frontend/dist`.
+
+The one thing to add is an environment variable:
+
+| Name | Value |
+| --- | --- |
+| `VITE_API_BASE_URL` | `https://your-api-host` (no trailing path) |
+
+Vite inlines `VITE_*` variables **at build time**, so this ships inside the
+public bundle and changing it needs a redeploy rather than a restart. Nothing
+secret belongs in it. Left unset, the frontend requests `/api/...` relative to
+itself, which is correct in local development — where Vite proxies to
+`localhost:4000` — and broken once deployed.
+
+Routing is done on the URL hash, so `/#admin` needs no rewrite rules.
+
+### 3. Connecting them
+
+The two origins differ, so the browser preflights every admin call. Once both
+are deployed, set `ALLOWED_ORIGINS` on the backend to the Vercel origin and
+redeploy it; until then the admin console will fail with
+`ต้นทางนี้ไม่ได้รับอนุญาต`. Vercel preview deployments each get their own
+origin, so add any you intend to use to the same comma-separated list.
+
 ## Tests
 
 ```bash

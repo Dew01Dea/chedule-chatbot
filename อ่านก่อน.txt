@@ -1,0 +1,50 @@
+โปรเจกต์ Chatbot ตารางสอน (รองรับหลายอาจารย์)
+==============================================
+
+โฟลเดอร์นี้คือโค้ดทั้งหมด พร้อมใช้งานได้เลย
+
+วิธีเริ่ม
+---------
+1) ติดตั้ง poppler  (Windows: โหลดจาก github.com/oschwartz10612/poppler-windows
+                     แล้วเพิ่มโฟลเดอร์ bin ลงใน PATH)
+
+2) Supabase
+   - สร้าง project ใหม่
+   - เปิดไฟล์ supabase/migrations/20260922120000_schedule_chatbot_schema.sql
+   - copy "เนื้อหาในไฟล์ทั้งหมด" ไปวางใน SQL Editor แล้วกด Run
+     (ไม่ใช่วางชื่อไฟล์)
+
+3) Backend
+   cd backend
+   npm install
+   copy .env.example .env      (Mac/Linux ใช้ cp)
+   แล้วกรอกค่าในไฟล์ .env
+   node scripts/migrate-schedule-json.js --dry-run
+   node scripts/migrate-schedule-json.js
+   npm run dev                 -> http://localhost:4000
+
+4) Frontend
+   cd frontend
+   npm install
+   npm run dev                 -> http://localhost:5173
+                                  /#admin = หน้าผู้ดูแล
+
+ทดสอบ:  cd backend && npm test     (47 tests)
+
+รายละเอียดทั้งหมดอยู่ใน README.md
+
+เอาขึ้น GitHub
+--------------
+1) สร้าง repo เปล่าชื่อ schedule-chatbot ที่ github.com/new
+   (อย่าติ๊ก Add a README)
+2) git clone GIT-HISTORY.bundle schedule-chatbot
+   cd schedule-chatbot
+   git remote set-url origin https://github.com/Dew01Dea/schedule-chatbot.git
+   git push -u origin claude/trusting-allen-ykpf0l
+
+หมายเหตุความปลอดภัย
+-------------------
+ไฟล์ .env.example เดิม (ในไฟล์ ZIP ที่ส่งมาตอนแรก) มี Typhoon API key จริงติดมาด้วย
+ควรไป revoke แล้วออกคีย์ใหม่ที่
+playground.opentyphoon.ai/settings/api-key
+คีย์นั้นไม่ได้ถูกใส่มาในไฟล์ชุดนี้

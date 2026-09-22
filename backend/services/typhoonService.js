@@ -20,9 +20,6 @@ async function callTyphoon(body) {
     );
   }
 
-  console.log("Typhoon API Key loaded:", true);
-  console.log("Typhoon API Key length:", apiKey.length);
-
   const response = await fetch(TYPHOON_API_URL, {
     method: "POST",
     headers: {

@@ -47,13 +47,19 @@ Two Typhoon models, two jobs:
 
 ### 1. Supabase
 
-Create a project, then in the SQL editor run:
+Create a project, then open
+`supabase/migrations/20260922120000_schedule_chatbot_schema.sql` from this
+repo, copy its **entire contents**, paste them into the Supabase SQL editor
+and run. (Paste the SQL itself, not the file path — the editor has no access
+to your filesystem.)
 
-```
-supabase/migrations/20260922120000_schedule_chatbot_schema.sql
+If you have the Supabase CLI linked to the project, you can instead run:
+
+```bash
+supabase db push
 ```
 
-That creates the tables, constraints, RLS policies and the private
+Either way this creates the tables, constraints, RLS policies and the private
 `schedule-pdfs` storage bucket. It is safe to run more than once.
 
 From **Project Settings → API** you need the project URL and the

@@ -1,23 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import MessageBubble from "./MessageBubble.jsx";
+import { api } from "../api.js";
 
-const SUGGESTED = [
+// The old chips named a specific room from one teacher's timetable, which
+// would be wrong for everyone else. These are phrased to fit any schedule.
+const SUGGESTIONS = [
   "วันจันทร์มีสอนกี่คาบ",
   "สอนวิชาอะไรบ้าง",
   "วันศุกร์ตอนบ่ายว่างไหม",
-  "ห้อง COM603 ใช้วันไหนบ้าง",
+  "ตอนนี้สอนอะไรอยู่",
 ];
 
-export default function ChatWindow() {
-  const [messages, setMessages] = useState([
+export default function ChatWindow({ teacher, onChangeTeacher }) {
+  const [messages, setMessages] = useState(() => [
     {
       role: "bot",
-      text: "สวัสดีครับ ผมช่วยตอบคำถามเกี่ยวกับตารางสอนของครูไมตรีได้ ลองถามได้เลย เช่น \"วันพุธมีคาบเรียนอะไรบ้าง\"",
+      text: `สวัสดีครับ ผมช่วยตอบคำถามเกี่ยวกับตารางสอนของ${teacher.fullName}ได้ ลองถามได้เลย เช่น "วันพุธมีคาบเรียนอะไรบ้าง"`,
     },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
+
+  // A term is only offered when the teacher actually has more than one.
+  const terms = teacher.terms || [];
+  const [selectedTerm, setSelectedTerm] = useState(terms[0] || null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -32,19 +39,15 @@ export default function ChatWindow() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed }),
+      const data = await api.ask({
+        message: trimmed,
+        teacherId: teacher.id,
+        academicYear: selectedTerm?.academicYear,
+        semester: selectedTerm?.semester,
       });
-      const data = await res.json();
-      const replyText = res.ok ? data.reply : data.error || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
-      setMessages((prev) => [...prev, { role: "bot", text: replyText }]);
+      setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
     } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาตรวจสอบว่า backend กำลังทำงานอยู่" },
-      ]);
+      setMessages((prev) => [...prev, { role: "bot", text: err.message }]);
     } finally {
       setLoading(false);
     }
@@ -53,8 +56,33 @@ export default function ChatWindow() {
   return (
     <div className="chat-card">
       <header className="chat-header">
-        <div className="chat-header__title">ตารางสอน · ครูไมตรี นาโพธิ์</div>
-        <div className="chat-header__subtitle">เทคโนโลยีสารสนเทศ · วิทยาลัยเทคนิคสัตหีบ · ภาคเรียน 1/2569</div>
+        <div className="chat-header__row">
+          <div>
+            <div className="chat-header__title">ตารางสอน · {teacher.fullName}</div>
+            <div className="chat-header__subtitle">
+              {[teacher.department, selectedTerm && `ภาคเรียน ${selectedTerm.label}`]
+                .filter(Boolean)
+                .join(" · ")}
+            </div>
+          </div>
+          <button className="chat-header__switch" onClick={onChangeTeacher}>
+            เปลี่ยนอาจารย์
+          </button>
+        </div>
+
+        {terms.length > 1 && (
+          <select
+            className="chat-header__term"
+            value={selectedTerm?.label || ""}
+            onChange={(e) => setSelectedTerm(terms.find((t) => t.label === e.target.value) || null)}
+          >
+            {terms.map((term) => (
+              <option key={term.label} value={term.label}>
+                ภาคเรียน {term.label}
+              </option>
+            ))}
+          </select>
+        )}
       </header>
 
       <div className="chat-messages" ref={scrollRef}>
@@ -69,7 +97,7 @@ export default function ChatWindow() {
       </div>
 
       <div className="chat-suggestions">
-        {SUGGESTED.map((s) => (
+        {SUGGESTIONS.map((s) => (
           <button key={s} className="suggestion-chip" onClick={() => sendMessage(s)} disabled={loading}>
             {s}
           </button>

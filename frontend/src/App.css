@@ -171,3 +171,483 @@ body {
   opacity: 0.5;
   cursor: default;
 }
+
+/* --------------------------------------------------------------------------
+   Teacher picker
+   -------------------------------------------------------------------------- */
+
+.picker-card {
+  width: 100%;
+  max-width: 560px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 24px 48px -32px rgba(31, 42, 68, 0.35);
+}
+
+.picker-title {
+  margin: 0;
+  font-size: 1.3rem;
+  color: var(--indigo);
+}
+
+.picker-subtitle {
+  margin: 6px 0 20px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.picker-status {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.picker-status--error {
+  color: #b42318;
+}
+
+.teacher-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.teacher-button {
+  width: 100%;
+  text-align: left;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: grid;
+  gap: 3px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.teacher-button:hover {
+  border-color: var(--teal);
+  transform: translateY(-1px);
+}
+
+.teacher-button__name {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.teacher-button__meta {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* --------------------------------------------------------------------------
+   Chat header additions
+   -------------------------------------------------------------------------- */
+
+.chat-header__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chat-header__switch {
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px solid rgba(242, 239, 232, 0.4);
+  color: #f2efe8;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.chat-header__switch:hover {
+  border-color: #f2efe8;
+}
+
+.chat-header__term {
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #f2efe8;
+  border: 1px solid rgba(242, 239, 232, 0.35);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 0.78rem;
+}
+
+.chat-header__term option {
+  color: var(--ink);
+}
+
+/* --------------------------------------------------------------------------
+   Admin console
+   -------------------------------------------------------------------------- */
+
+.app-shell--wide {
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.admin-shell {
+  width: 100%;
+  max-width: 1100px;
+  display: grid;
+  gap: 18px;
+}
+
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-header__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 22px;
+}
+
+.admin-card--narrow {
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.admin-title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--indigo);
+}
+
+.admin-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--indigo);
+}
+
+.admin-hint {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.admin-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  border-radius: 8px;
+  color: #b42318;
+  font-size: 0.85rem;
+}
+
+.admin-notice {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  background: #ecfdf3;
+  border: 1px solid #abefc6;
+  border-radius: 8px;
+  color: #067647;
+  font-size: 0.85rem;
+}
+
+.admin-form {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.admin-form--grid {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  align-items: end;
+}
+
+.admin-form__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-field {
+  display: grid;
+  gap: 5px;
+  font-size: 0.82rem;
+  color: #4b5563;
+}
+
+.admin-input {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 0.9rem;
+  font-family: inherit;
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.admin-input:focus {
+  outline: 2px solid var(--teal);
+  outline-offset: -1px;
+}
+
+.admin-button {
+  background: var(--indigo);
+  color: #f2efe8;
+  border: 1px solid var(--indigo);
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-button:hover:not(:disabled) {
+  background: var(--indigo-soft);
+}
+
+.admin-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-button--ghost {
+  background: transparent;
+  color: var(--indigo);
+  border-color: var(--line);
+}
+
+.admin-button--ghost:hover:not(:disabled) {
+  background: var(--paper);
+  border-color: var(--teal);
+}
+
+.admin-button--small {
+  padding: 5px 10px;
+  font-size: 0.78rem;
+}
+
+.admin-result {
+  margin-top: 16px;
+  padding: 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 0.88rem;
+}
+
+.admin-result__counts {
+  display: flex;
+  gap: 16px;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  font-size: 0.82rem;
+  color: #4b5563;
+}
+
+.admin-teacher-list,
+.admin-schedule-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.admin-teacher {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.admin-teacher__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-teacher__name {
+  font-weight: 600;
+}
+
+.admin-teacher__meta {
+  font-size: 0.8rem;
+  color: #6b7280;
+  flex: 1;
+}
+
+.admin-schedule-list {
+  margin-top: 12px;
+  padding-left: 4px;
+}
+
+.admin-schedule {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.status-pill {
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: #4b5563;
+}
+
+.status-pill--published {
+  background: #ecfdf3;
+  border-color: #abefc6;
+  color: #067647;
+}
+
+.status-pill--needs_review {
+  background: #fffaeb;
+  border-color: #fedf89;
+  color: #b54708;
+}
+
+.status-pill--archived {
+  color: #9ca3af;
+}
+
+/* Review screen: PDF beside the extracted rows. */
+
+.review-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.review-split {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .review-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.review-pdf__frame {
+  width: 100%;
+  height: 520px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+}
+
+.review-table-wrap {
+  overflow-x: auto;
+  max-height: 520px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.review-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.review-table th {
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  text-align: left;
+  padding: 9px 8px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+  z-index: 1;
+}
+
+.review-table td {
+  padding: 5px 6px;
+  border-bottom: 1px solid #f1ece2;
+  vertical-align: top;
+}
+
+.entry-row--error td {
+  background: #fef3f2;
+}
+
+.entry-row--warning td {
+  background: #fffaeb;
+}
+
+.entry-input {
+  width: 100%;
+  min-width: 82px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 5px 6px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  background: #ffffff;
+  color: var(--ink);
+}
+
+.entry-input:hover {
+  border-color: var(--line);
+}
+
+.entry-input:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+.entry-input--time {
+  min-width: 64px;
+}
+
+.entry-issues {
+  padding: 4px 8px 9px;
+}
+
+.entry-issue {
+  font-size: 0.76rem;
+  line-height: 1.5;
+}
+
+.entry-issue--error {
+  color: #b42318;
+}
+
+.entry-issue--warning {
+  color: #b54708;
+}
+
+.review-actions {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}

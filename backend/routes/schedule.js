@@ -1,48 +1,52 @@
 const express = require("express");
-const multer = require("multer");
-const fs = require("fs");
-const path = require("path");
-const { ocrPdfWithTyphoon, structureScheduleFromMarkdown } = require("../services/typhoonService");
+const store = require("../store");
+const { sendError, handleRouteError } = require("../lib/httpError");
 
 const router = express.Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 15 * 1024 * 1024 } });
 
-const SCHEDULE_PATH = path.join(__dirname, "..", "data", "schedule.json");
+/**
+ * GET /api/schedule?teacherId=...&academicYear=&semester=
+ *
+ * Returns one teacher's published schedule. Previously this took no
+ * parameters because there was only ever one schedule on disk; a teacher must
+ * now be named, for the same reason /api/chat requires one.
+ */
+router.get("/", async (req, res) => {
+  const { teacherId, academicYear, semester } = req.query;
 
-// GET /api/schedule -> return whatever schedule is currently stored
-router.get("/", (req, res) => {
+  if (!teacherId) {
+    return sendError(res, 400, "TEACHER_REQUIRED", "ต้องระบุ teacherId");
+  }
+
   try {
-    const raw = fs.readFileSync(SCHEDULE_PATH, "utf-8");
-    res.json(JSON.parse(raw));
-  } catch (err) {
-    res.status(404).json({ error: "No schedule stored yet. Upload a PDF first." });
+    const schedule = await store.getPublishedSchedule(teacherId, {
+      academicYear: academicYear ? Number(academicYear) : undefined,
+      semester: semester ? Number(semester) : undefined,
+    });
+
+    if (!schedule) {
+      return sendError(res, 404, "SCHEDULE_NOT_FOUND", "ไม่พบตารางสอนที่เผยแพร่แล้วของอาจารย์ท่านนี้");
+    }
+
+    res.json(schedule);
+  } catch (error) {
+    handleRouteError(res, error, "GET /api/schedule");
   }
 });
 
-// POST /api/schedule/extract -> upload a new PDF, OCR it, and store the result
-router.post("/extract", upload.single("schedulePdf"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded. Field name must be 'schedulePdf'." });
-  }
-  if (req.file.mimetype !== "application/pdf") {
-    return res.status(400).json({ error: "Only PDF files are supported." });
-  }
-
-  try {
-    // Stage 1: Typhoon OCR reads the Thai page images accurately.
-    const ocrMarkdown = await ocrPdfWithTyphoon(req.file.buffer);
-
-    // Stage 2: Typhoon's instruct model structures that clean text into the schedule schema.
-    const extracted = await structureScheduleFromMarkdown(ocrMarkdown);
-    extracted.extractedAt = new Date().toISOString();
-    extracted.sourceFile = req.file.originalname;
-
-    fs.writeFileSync(SCHEDULE_PATH, JSON.stringify(extracted, null, 2), "utf-8");
-    res.json({ message: "Schedule extracted and stored.", schedule: extracted });
-  } catch (err) {
-    console.error("Extraction failed:", err);
-    res.status(500).json({ error: "Failed to extract schedule from PDF.", details: err.message });
-  }
+/**
+ * POST /api/schedule/extract used to accept a PDF from anyone and overwrite
+ * the live schedule with whatever came back. It is answered explicitly rather
+ * than left to 404, so any existing caller is told where the replacement is.
+ */
+router.post("/extract", (req, res) => {
+  res.status(410).json({
+    error: {
+      code: "ENDPOINT_REPLACED",
+      message:
+        "ย้ายไปที่ POST /api/admin/schedules/upload ซึ่งต้องเข้าสู่ระบบผู้ดูแล ระบุอาจารย์ และผ่านการตรวจสอบก่อนเผยแพร่",
+    },
+  });
 });
 
 module.exports = router;

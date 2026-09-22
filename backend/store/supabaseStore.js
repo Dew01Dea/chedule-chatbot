@@ -351,13 +351,16 @@ async function createDraftSchedule({
       validation.issues.map((issue) => issue.entryIndex).filter((i) => i !== null)
     );
 
+    // Drafts hold what OCR actually read, including gaps — those are what the
+    // reviewer is there to fill. Missing values go in as NULL rather than
+    // undefined, which PostgREST would otherwise drop from the row entirely.
     const entries = validation.entries.map((entry, index) => ({
       schedule_id: schedule.id,
-      day_th: entry.day,
+      day_th: entry.day ?? null,
       day_en: entry.dayEn || null,
-      time_start: entry.timeStart,
-      time_end: entry.timeEnd,
-      subject_code: entry.subjectCode,
+      time_start: entry.timeStart ?? null,
+      time_end: entry.timeEnd ?? null,
+      subject_code: entry.subjectCode ?? null,
       session_type: entry.type || null,
       room: entry.room || null,
       student_group: entry.group || null,
@@ -484,7 +487,14 @@ async function updateEntry(scheduleId, entryId, patch, reviewer) {
     .select()
     .maybeSingle();
 
-  if (error) throw fail("Updating entry", error);
+  if (error) {
+    if (error.code === "23514" || /ไม่ถูกต้อง/.test(error.message || "")) {
+      const invalid = new Error(error.message);
+      invalid.code = "ENTRY_INVALID";
+      throw invalid;
+    }
+    throw fail("Updating entry", error);
+  }
   if (!data) return null;
 
   await supabase
@@ -550,7 +560,17 @@ async function publishSchedule(scheduleId, reviewer) {
     .select()
     .single();
 
-  if (publishError) throw fail("Publishing schedule", publishError);
+  if (publishError) {
+    // The database refuses to publish a schedule with invalid entries, and its
+    // message names the offending row. Pass that through rather than burying
+    // it in a generic store error.
+    if (publishError.code === "23514" || /เผยแพร่ไม่ได้/.test(publishError.message || "")) {
+      const blocked = new Error(publishError.message);
+      blocked.code = "PUBLISH_BLOCKED";
+      throw blocked;
+    }
+    throw fail("Publishing schedule", publishError);
+  }
 
   return { id: published.id, status: published.status, publishedAt: published.published_at };
 }

@@ -53,10 +53,12 @@ Two Typhoon models, two jobs:
 ### 1. Supabase
 
 Create a project, then open
-`supabase/migrations/20260922120000_schedule_chatbot_schema.sql` from this
-repo, copy its **entire contents**, paste them into the Supabase SQL editor
-and run. (Paste the SQL itself, not the file path — the editor has no access
-to your filesystem.)
+each file in `supabase/migrations/` **in filename order**, copy its entire
+contents, paste them into the Supabase SQL editor and run. (Paste the SQL
+itself, not the file path — the editor has no access to your filesystem.)
+
+If you set the database up before, re-running only the newer files is enough;
+each one is safe to run more than once.
 
 If you have the Supabase CLI linked to the project, you can instead run:
 
@@ -219,6 +221,10 @@ checked, and findings are split by what they imply:
 - **Errors block publishing**: unreadable output, no sessions at all, a
   malformed or reversed time, an unknown weekday, a subject code absent from
   the document's own subject list, or two sessions overlapping on one day.
+  A draft still *stores* these rows — that is what the reviewer is there to
+  correct — and the database enforces the same rules at publish time, so a
+  schedule with an uncorrected row cannot go live even if the application
+  layer is bypassed.
 - **Warnings route the row to a reviewer**: a missing room or group, a
   duplicated row, an implausible hour, an unusually long session.
 

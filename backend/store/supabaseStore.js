@@ -588,6 +588,16 @@ async function storePdf({ teacherId, scheduleId, buffer, fileName, checksum, upl
   // An existing object means the same bytes are already stored; the row below
   // is what actually enforces "do not process this twice".
   if (uploadError && !/exists/i.test(uploadError.message)) {
+    // The bucket is created by the migration, but that statement is the one
+    // most likely to have been skipped if it hit a permissions error in the
+    // SQL editor. Say so rather than reporting a generic storage failure.
+    if (/bucket.*not.*found/i.test(uploadError.message)) {
+      const missing = new Error(
+        `Supabase Storage bucket "${PDF_BUCKET}" does not exist.`
+      );
+      missing.code = "STORAGE_BUCKET_MISSING";
+      throw missing;
+    }
     throw fail("Uploading the PDF", uploadError);
   }
 

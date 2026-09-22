@@ -27,10 +27,12 @@ export function setAdminToken(token) {
 }
 
 class ApiError extends Error {
-  constructor(message, code, status) {
+  constructor(message, code, status, detail) {
     super(message);
     this.code = code;
     this.status = status;
+    // Admin routes include the underlying cause; public ones do not.
+    this.detail = detail;
   }
 }
 
@@ -61,7 +63,8 @@ async function request(path, { admin = false, headers = {}, ...options } = {}) {
     throw new ApiError(
       body?.error?.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
       body?.error?.code || "UNKNOWN",
-      response.status
+      response.status,
+      body?.error?.detail
     );
   }
 

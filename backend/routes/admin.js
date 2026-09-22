@@ -109,7 +109,7 @@ router.post("/schedules/upload", upload.single("schedulePdf"), async (req, res) 
             : "พบข้อผิดพลาดที่ต้องแก้ไขก่อนจึงจะเผยแพร่ได้",
     });
   } catch (error) {
-    handleRouteError(res, error, "POST /api/admin/schedules/upload");
+    handleRouteError(res, error, "POST /api/admin/schedules/upload", { detailed: true });
   }
 });
 
@@ -155,7 +155,7 @@ router.get("/teachers/:teacherId/schedules", async (req, res) => {
   try {
     res.json({ schedules: await store.listSchedulesForTeacher(req.params.teacherId) });
   } catch (error) {
-    handleRouteError(res, error, "GET /api/admin/teachers/:id/schedules");
+    handleRouteError(res, error, "GET /api/admin/teachers/:id/schedules", { detailed: true });
   }
 });
 
@@ -177,7 +177,7 @@ router.get("/schedules/:scheduleId", async (req, res) => {
 
     res.json({ schedule, documentUrl });
   } catch (error) {
-    handleRouteError(res, error, "GET /api/admin/schedules/:id");
+    handleRouteError(res, error, "GET /api/admin/schedules/:id", { detailed: true });
   }
 });
 
@@ -200,7 +200,7 @@ router.patch("/schedules/:scheduleId/entries/:entryId", async (req, res) => {
 
     res.json({ entry: updated });
   } catch (error) {
-    handleRouteError(res, error, "PATCH /api/admin/schedules/:id/entries/:entryId");
+    handleRouteError(res, error, "PATCH /api/admin/schedules/:id/entries/:entryId", { detailed: true });
   }
 });
 
@@ -215,7 +215,7 @@ router.post("/schedules/:scheduleId/publish", async (req, res) => {
 
     res.json({ schedule: published, message: "เผยแพร่ตารางสอนเรียบร้อยแล้ว" });
   } catch (error) {
-    handleRouteError(res, error, "POST /api/admin/schedules/:id/publish");
+    handleRouteError(res, error, "POST /api/admin/schedules/:id/publish", { detailed: true });
   }
 });
 

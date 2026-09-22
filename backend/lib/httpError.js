@@ -15,6 +15,9 @@ const USER_SAFE_MESSAGES = {
   STORE_READ_ONLY: "ระบบยังไม่ได้เชื่อมต่อฐานข้อมูล จึงยังทำรายการนี้ไม่ได้",
   STRUCTURING_NOT_JSON: "อ่านตารางสอนจากไฟล์นี้ไม่สำเร็จ กรุณาตรวจสอบไฟล์แล้วลองใหม่",
   NOTHING_TO_UPDATE: "ไม่มีข้อมูลที่ต้องแก้ไข",
+  STORE_ERROR: "บันทึกข้อมูลลงฐานข้อมูลไม่สำเร็จ",
+  STORAGE_BUCKET_MISSING:
+    "ยังไม่มีที่เก็บไฟล์ชื่อ schedule-pdfs ใน Supabase Storage — สร้าง bucket นี้แบบ private ใน Dashboard แล้วลองใหม่",
 
   // These reach admins only, on routes behind the admin token. An operator
   // cannot fix a setup problem they are not told about, and none of these
@@ -47,8 +50,14 @@ function sendError(res, status, code, message, extra = {}) {
 /**
  * Turns a thrown error into a response without leaking internals.
  * `context` identifies the operation in the server log.
+ *
+ * `options.detailed` is set by admin routes. Those sit behind the admin token
+ * and are operated by whoever runs the server, so withholding the underlying
+ * message there does not protect anyone — it just turns a fixable setup
+ * problem (a missing storage bucket, a rejected insert) into an unactionable
+ * "internal error". Public routes still get the generic message.
  */
-function handleRouteError(res, error, context) {
+function handleRouteError(res, error, context, options = {}) {
   console.error(`[${context}]`, error);
 
   const known = USER_SAFE_MESSAGES[error.code];
@@ -64,10 +73,34 @@ function handleRouteError(res, error, context) {
               ? 429
               : 400;
 
-    return sendError(res, status, error.code, known);
+    return sendError(res, status, error.code, known, detailFor(error, options));
   }
 
-  return sendError(res, 500, "INTERNAL_ERROR", "เกิดข้อผิดพลาดภายในระบบ กรุณาลองใหม่อีกครั้ง");
+  return sendError(
+    res,
+    500,
+    error.code || "INTERNAL_ERROR",
+    "เกิดข้อผิดพลาดภายในระบบ กรุณาลองใหม่อีกครั้ง",
+    detailFor(error, options)
+  );
+}
+
+/**
+ * The underlying message, for admin routes only. Anything that looks like a
+ * credential is stripped, since an error body is not a place to reproduce one
+ * even for an operator who legitimately has it.
+ */
+function detailFor(error, options) {
+  if (!options.detailed) return {};
+
+  const cause = error.cause?.message ? ` (${error.cause.message})` : "";
+  const detail = `${error.message || String(error)}${cause}`
+    .replace(/eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, "<redacted-jwt>")
+    .replace(/sb_[a-z]+_[A-Za-z0-9_-]{10,}/g, "<redacted-key>")
+    .replace(/sk-[A-Za-z0-9]{10,}/g, "<redacted-key>")
+    .slice(0, 400);
+
+  return { detail };
 }
 
 module.exports = { sendError, handleRouteError };

@@ -89,7 +89,8 @@ function UploadForm({ teachers, onUploaded }) {
       setResult(data);
       onUploaded(teacherId);
     } catch (err) {
-      setError(err.message);
+      // The detail is the part that says which step actually failed.
+      setError(err.detail ? `${err.message}\n\n[${err.code}] ${err.detail}` : err.message);
     } finally {
       setBusy(false);
     }

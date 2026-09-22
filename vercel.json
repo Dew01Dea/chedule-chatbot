@@ -1,6 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "//": "The repository root holds both halves, so framework detection is turned off (the Vite project lives in frontend/) and the build is spelled out instead. This keeps a plain 'import repository' working without also setting a Root Directory in the project settings.",
   "framework": null,
   "installCommand": "npm --prefix frontend ci",
   "buildCommand": "npm --prefix frontend run build",

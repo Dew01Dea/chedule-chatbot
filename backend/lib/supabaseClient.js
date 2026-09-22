@@ -5,10 +5,9 @@ let client = null;
 /**
  * The server-side key, under either of the names it goes by.
  *
- * Supabase's dashboard has relabelled this key over time — older projects show
- * it as "service_role", newer ones as "Secret key" — and the sibling POS
- * project in this account already uses SUPABASE_SECRET_KEY. Accepting both
- * avoids the worst failure mode here: a misnamed variable does not error, it
+ * Supabase's dashboard has relabelled this key over time: older projects show
+ * it as "service_role", newer ones as "Secret key". Accepting both names
+ * avoids the worst failure mode here — a misnamed variable does not error, it
  * silently leaves the server in read-only JSON mode, which is hard to trace
  * back to a typo in .env.
  */

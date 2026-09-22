@@ -1,0 +1,63 @@
+{
+  "college": "วิทยาลัยเทคนิคสัตหีบ",
+  "semester": "1/2569",
+  "department": "เทคโนโลยีสารสนเทศ",
+  "weekRange": "สัปดาห์ที่ 4-18",
+  "teacher": {
+    "name": "นายไมตรี นาโพธิ์",
+    "nickname": "บอล",
+    "education": "ครุศาสตร์อุตสาหกรรมบัณฑิต",
+    "duty": "ผู้ช่วยหัวหน้างานสื่อการเรียนการสอน"
+  },
+  "subjects": [
+    {
+      "code": "31901-2007",
+      "name": "เทคโนโลยีการจัดการฐานข้อมูล",
+      "hours": { "theory": 1, "practice": 4, "creditUnits": 3, "totalHoursPerWeek": 9 }
+    },
+    {
+      "code": "31900-1002",
+      "name": "การจัดการข้อมูลขนาดใหญ่เบื้องต้น",
+      "hours": { "theory": 1, "practice": 2, "creditUnits": 2, "totalHoursPerWeek": 10 }
+    },
+    {
+      "code": "31901-2012",
+      "name": "การวิเคราะห์และนำเสนอข้อมูล",
+      "hours": { "theory": 1, "practice": 4, "creditUnits": 3, "totalHoursPerWeek": 5 }
+    },
+    {
+      "code": "21901-2014",
+      "name": "ระบบปฏิบัติการเครื่องแม่ข่ายเบื้องต้น",
+      "hours": { "theory": 1, "practice": 4, "creditUnits": 3, "totalHoursPerWeek": 9 }
+    }
+  ],
+  "sessions": [
+    { "day": "จันทร์", "dayEn": "Monday", "timeStart": "08:00", "timeEnd": "09:00", "subjectCode": "31901-2007", "type": "ทฤษฎี", "room": "COM602", "group": "สท.4/1-2", "studentCount": 39 },
+    { "day": "จันทร์", "dayEn": "Monday", "timeStart": "09:00", "timeEnd": "11:00", "subjectCode": "31901-2007", "type": "ปฏิบัติ", "room": "COM602", "group": "สท.4/2", "studentCount": 19 },
+    { "day": "จันทร์", "dayEn": "Monday", "timeStart": "12:00", "timeEnd": "14:00", "subjectCode": "31901-2007", "type": "ปฏิบัติ", "room": "COM602", "group": "สท.4/2", "studentCount": 19 },
+    { "day": "จันทร์", "dayEn": "Monday", "timeStart": "14:00", "timeEnd": "18:00", "subjectCode": "31901-2012", "type": "ปฏิบัติ", "room": "สถานประกอบการ (นอกสถานที่)", "group": "สท.5/1-2", "studentCount": 44, "note": "ฝึกงาน/ออกสถานประกอบการ" },
+
+    { "day": "อังคาร", "dayEn": "Tuesday", "timeStart": "12:00", "timeEnd": "14:00", "subjectCode": "21901-2014", "type": "ปฏิบัติ", "room": "COM403", "group": "สท.3/3", "studentCount": 18 },
+    { "day": "อังคาร", "dayEn": "Tuesday", "timeStart": "15:00", "timeEnd": "17:00", "subjectCode": "31900-1002", "type": "ปฏิบัติ", "room": "COM404", "group": "สท.4/2", "studentCount": 19 },
+
+    { "day": "พุธ", "dayEn": "Wednesday", "timeStart": "08:00", "timeEnd": "09:00", "subjectCode": "21901-2014", "type": "ทฤษฎี", "room": "COM403", "group": "สท.3/3-4", "studentCount": 35 },
+    { "day": "พุธ", "dayEn": "Wednesday", "timeStart": "09:00", "timeEnd": "11:00", "subjectCode": "31901-2007", "type": "ปฏิบัติ", "room": "COM403", "group": "สท.4/1", "studentCount": 20 },
+    { "day": "พุธ", "dayEn": "Wednesday", "timeStart": "12:00", "timeEnd": "14:00", "subjectCode": "31901-2007", "type": "ปฏิบัติ", "room": "COM403", "group": "สท.4/1", "studentCount": 20 },
+    { "day": "พุธ", "dayEn": "Wednesday", "timeStart": "16:00", "timeEnd": "18:00", "subjectCode": "31900-1002", "type": "ปฏิบัติ", "room": "COM603", "group": "คภ.4/1", "studentCount": 20 },
+
+    { "day": "พฤหัสบดี", "dayEn": "Thursday", "timeStart": "08:00", "timeEnd": "10:00", "subjectCode": "21901-2014", "type": "ปฏิบัติ", "room": "COM301", "group": "สท.3/4", "studentCount": 17 },
+    { "day": "พฤหัสบดี", "dayEn": "Thursday", "timeStart": "12:00", "timeEnd": "13:00", "subjectCode": "31900-1002", "type": "ทฤษฎี", "room": "COM602", "group": "สท.4/1-2", "studentCount": 39 },
+    { "day": "พฤหัสบดี", "dayEn": "Thursday", "timeStart": "13:00", "timeEnd": "15:00", "subjectCode": "31900-1002", "type": "ปฏิบัติ", "room": "COM602", "group": "สท.4/1", "studentCount": 20 },
+    { "day": "พฤหัสบดี", "dayEn": "Thursday", "timeStart": "15:00", "timeEnd": "16:00", "subjectCode": "31900-1002", "type": "ทฤษฎี", "room": "COM603", "group": "คภ.4/1-2", "studentCount": 35 },
+    { "day": "พฤหัสบดี", "dayEn": "Thursday", "timeStart": "16:00", "timeEnd": "18:00", "subjectCode": "31900-1002", "type": "ปฏิบัติ", "room": "COM603", "group": "คภ.4/2", "studentCount": 15 },
+
+    { "day": "ศุกร์", "dayEn": "Friday", "timeStart": "10:00", "timeEnd": "12:00", "subjectCode": "21901-2014", "type": "ปฏิบัติ", "room": "COM603", "group": "สท.3/3", "studentCount": 18 },
+    { "day": "ศุกร์", "dayEn": "Friday", "timeStart": "12:00", "timeEnd": "14:00", "subjectCode": "21901-2014", "type": "ปฏิบัติ", "room": "COM603", "group": "สท.3/4", "studentCount": 17 },
+    { "day": "ศุกร์", "dayEn": "Friday", "timeStart": "17:00", "timeEnd": "18:00", "subjectCode": "31901-2012", "type": "ทฤษฎี", "room": "ออนไลน์", "group": "สท.5/1-2", "studentCount": 44, "note": "เรียนออนไลน์" }
+  ],
+  "extractedAt": "seed-from-upload",
+  "sourceFile": "ตารางสอน.pdf",
+  "semesterStartDate": null,
+  "semesterEndDate": null,
+  "_note_semesterDates": "Fill these in (YYYY-MM-DD) from the college's official academic calendar so the chatbot can scope 'เทอมนี้หยุดวันไหนบ้าง' precisely. Left null for now since exact dates for this specific วิทยาลัยเทคนิค weren't confirmed — vocational college calendars can differ from general school calendars."
+}

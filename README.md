@@ -86,12 +86,14 @@ empty.
 
 ### 2. Backend
 
+The repository is an npm workspace, so one install at the root covers both
+halves:
+
 ```bash
-cd backend
-npm install
-cp .env.example .env
+npm install                       # from the repository root, installs both
+cp backend/.env.example backend/.env
 # fill in the values described below
-npm run dev
+npm run dev:backend
 ```
 
 Runs on `http://localhost:4000`.
@@ -165,71 +167,49 @@ log still looks healthy.
 
 ### 4. Frontend
 
+Already installed by the root `npm install` above, so this only needs starting:
+
 ```bash
-cd frontend
-npm install
-npm run dev
+npm run dev:frontend
 ```
 
-Runs on `http://localhost:5173` and proxies `/api` to the backend.
+Runs on `http://localhost:5173` and proxies `/api` to `localhost:4000`. That
+proxy is configured in `frontend/vite.config.js` and applies to `npm run dev`
+only — it is not part of a production build, where the frontend instead uses a
+relative `/api` path against whatever origin serves it.
 
 - `/` — pick a teacher, then chat
 - `/#admin` — the admin console (asks for an admin token)
 
 ## Deployment
 
-The two halves are deployed separately, because they need different things from
-a host.
+Both halves deploy to Vercel from one project: the frontend as the static
+bundle, the backend as a single serverless function. The repository is an npm
+workspace, so `npm ci` at the root installs both and `vercel.json` describes the
+rest.
 
-The **frontend** is a static bundle, so it goes to Vercel. The **backend** does
-not: the OCR pipeline shells out to poppler's `pdftoppm` to rasterize each PDF
-page, and that binary cannot be installed into a Vercel serverless function.
-Uploads also run one Typhoon OCR call per page in sequence, which for a
-multi-page PDF comfortably exceeds Vercel's function time limit. So the backend
-runs as a container on a host that gives it a real filesystem and no request
-deadline — Render, Railway and Fly.io all work; `backend/Dockerfile` is what
-they build.
+### What does not work on Vercel
 
-### 1. Backend
+Uploading a schedule PDF. `POST /api/admin/schedules/upload` rasterizes each
+page with poppler's `pdftoppm`, and that binary cannot be installed into a
+serverless function, so the route answers `POPPLER_MISSING`. Two smaller limits
+sit behind the same route: Vercel caps a request body at 4.5MB where the route
+itself allows 15MB, and a function at 60s where OCR runs one Typhoon call per
+page in sequence.
 
-On Render, point a new Blueprint at this repository and it reads `render.yaml`,
-which builds `backend/Dockerfile` and prompts for each secret. By hand, on any
-Docker host, the settings are:
+Everything else — the teacher list, chat, publishing, manual editing and
+deleting — only talks to Supabase and Typhoon over HTTP and runs here fine.
 
-| Setting | Value |
-| --- | --- |
-| Dockerfile | `backend/Dockerfile` |
-| Build context | `backend` |
-| Health check | `/api/health` |
+To upload a new schedule, run the backend somewhere with poppler: locally with
+`npm run dev --workspace backend`, or as a container from `backend/Dockerfile`
+(`render.yaml` wires that up on Render). Both write to the same Supabase
+project, so a schedule published from either one is immediately live on the
+deployed site.
 
-Set the same variables described in [Backend](#2-backend) above —
-`TYPHOON_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_TOKENS`
-and `APP_TIMEZONE`. Two behave differently in production:
+### Setting it up
 
-- `ALLOWED_ORIGINS` — set this to the deployed frontend's origin, e.g.
-  `https://your-app.vercel.app`. While it is empty the server accepts every
-  origin and says so in a boot warning.
-- `POPPLER_PATH` — leave it unset. The image installs `poppler-utils` into the
-  normal location, so `pdftoppm` is already on `PATH`.
-
-`PORT` is supplied by the host and read by `server.js`; there is no need to set
-it yourself.
-
-Confirm the deployment before moving on:
-
-```bash
-curl https://your-api-host/api/health
-# {"status":"ok","store":"supabase","multiTeacher":true}
-```
-
-A `store` of `json` there means Supabase did not configure — check the URL and
-that the key is the server-side one, not the anon key.
-
-### 2. Frontend
-
-Import the repository into Vercel. The root `vercel.json` already describes the
-build — it installs and builds inside `frontend/` and serves `frontend/dist` —
-so the Build & Development Settings in the dashboard should be left **empty**:
+Import the repository into Vercel. `vercel.json` already describes the build, so
+the Build & Development Settings in the dashboard should be left **empty**:
 
 | Setting | Value |
 | --- | --- |
@@ -238,43 +218,77 @@ so the Build & Development Settings in the dashboard should be left **empty**:
 | Output Directory | *(empty)* |
 | Install Command | *(empty)* |
 
-Both halves are worth stating plainly, because each one fails in a way that
-does not name its cause:
+Both are worth stating plainly, because each fails in a way that does not name
+its cause:
 
 - A value typed into one of those fields **overrides** `vercel.json`. Vercel's
-  own placeholder text suggests `vite build`, and typing that in produces
-  `vite: command not found`, because the repository root has no `package.json`
-  — vite is installed under `frontend/`.
+  placeholder text suggests `vite build`, and typing that in produces
+  `vite: command not found`, because the root has no vite of its own.
 - Root Directory has to stay `./`. Vercel reads `vercel.json` from whatever the
-  Root Directory is, so pointing it at `frontend` means the file is never read
-  at all, and `--prefix frontend` would then resolve against the wrong
-  directory.
+  Root Directory is, so pointing it at `frontend` means the file is never read.
 
-`vercel.json` is validated against a strict schema that rejects unknown keys,
-so it cannot carry JSON comments — anything worth explaining about the build
+`vercel.json` is validated against a strict schema that rejects unknown keys, so
+it cannot carry JSON comments — anything worth explaining about the build
 belongs here instead.
 
-The one thing to add is an environment variable:
+Then set the environment variables, which are the same server-side ones
+described in [Backend](#2-backend) above:
 
-| Name | Value |
+| Name | Notes |
 | --- | --- |
-| `VITE_API_BASE_URL` | `https://your-api-host` (no trailing path) |
+| `TYPHOON_API_KEY` | |
+| `SUPABASE_URL` | |
+| `SUPABASE_SERVICE_ROLE_KEY` | The server-side key, never the anon one |
+| `ADMIN_TOKENS` | Generate fresh tokens rather than reusing local ones |
+| `APP_TIMEZONE` | `Asia/Bangkok` |
 
-Vite inlines `VITE_*` variables **at build time**, so this ships inside the
-public bundle and changing it needs a redeploy rather than a restart. Nothing
-secret belongs in it. Left unset, the frontend requests `/api/...` relative to
-itself, which is correct in local development — where Vite proxies to
-`localhost:4000` — and broken once deployed.
+Three variables are deliberately **not** set here:
+
+- `VITE_API_BASE_URL` — leave it unset. Frontend and backend share an origin, so
+  the relative `/api/...` paths already reach the function. Setting it is only
+  for pointing the frontend at a backend on another host.
+- `ALLOWED_ORIGINS` — same reason. One origin means no cross-origin request to
+  allow.
+- `POPPLER_PATH` — there is no poppler here to point at.
+
+These are read at request time by the function, so changing one takes effect
+without a rebuild. `VITE_API_BASE_URL` is the exception: Vite inlines `VITE_*`
+variables at **build** time, so were you to set it, it would ship inside the
+public bundle and need a redeploy to change.
+
+Confirm the deployment:
+
+```bash
+curl https://your-app.vercel.app/api/health
+# {"status":"ok","store":"supabase","multiTeacher":true}
+```
+
+A `store` of `json` means Supabase did not configure, and the site is serving
+the single teacher in `backend/data/schedule.json` read-only — check the URL and
+that the key is the server-side one.
 
 Routing is done on the URL hash, so `/#admin` needs no rewrite rules.
 
-### 3. Connecting them
+### Running the backend as a container instead
 
-The two origins differ, so the browser preflights every admin call. Once both
-are deployed, set `ALLOWED_ORIGINS` on the backend to the Vercel origin and
-redeploy it; until then the admin console will fail with
-`ต้นทางนี้ไม่ได้รับอนุญาต`. Vercel preview deployments each get their own
-origin, so add any you intend to use to the same comma-separated list.
+`backend/Dockerfile` installs `poppler-utils`, so a container has the full
+pipeline including uploads. On Render, point a new Blueprint at this repository
+and it reads `render.yaml`; by hand, on any Docker host:
+
+| Setting | Value |
+| --- | --- |
+| Dockerfile | `backend/Dockerfile` |
+| Build context | `backend` |
+| Health check | `/api/health` |
+
+The build context is `backend`, so the container is built from
+`backend/package.json` and its own lockfile — the root workspace is not involved,
+and `PORT` comes from the host.
+
+Set the same variables as above, plus `ALLOWED_ORIGINS` if a browser on another
+origin will call it. If the deployed frontend should talk to this container
+rather than to the Vercel function, set `VITE_API_BASE_URL` to its URL on Vercel
+and redeploy the frontend.
 
 ## Tests
 

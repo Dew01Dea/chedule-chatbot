@@ -1,0 +1,16 @@
+{
+  "name": "chedule-chatbot",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Thai teacher schedule chatbot: Vite frontend and Express backend deployed together on Vercel",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace frontend",
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "test": "npm test --workspace backend"
+  }
+}

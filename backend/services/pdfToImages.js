@@ -36,14 +36,29 @@ function pdfBufferToPngPages(pdfBuffer, dpi = 200) {
           // problem the operator can fix — quite different from a PDF that
           // poppler could not read. They need different advice, so they get
           // different codes.
+          //
+          // And a missing binary splits again by where the server runs. On a
+          // host with a filesystem, poppler can be installed and pointed at.
+          // In a serverless function it cannot be installed at all, so the
+          // usual advice would send an operator hunting for a setting that
+          // could never have worked. VERCEL is set by that platform itself.
           const missing = err.code === "ENOENT";
+          const serverless = Boolean(process.env.VERCEL);
+
           const error = new Error(
-            missing
-              ? `pdftoppm was not found. Looked in: ${popplerSource()}. ` +
-                "Set POPPLER_PATH in backend/.env to poppler's bin directory."
-              : `pdftoppm failed to render the PDF: ${err.message}`
+            !missing
+              ? `pdftoppm failed to render the PDF: ${err.message}`
+              : serverless
+                ? "pdftoppm cannot exist in a serverless function, so this deployment " +
+                  "cannot rasterize PDFs. Run the backend where poppler is installed."
+                : `pdftoppm was not found. Looked in: ${popplerSource()}. ` +
+                  "Set POPPLER_PATH in backend/.env to poppler's bin directory."
           );
-          error.code = missing ? "POPPLER_MISSING" : "PDF_RENDER_FAILED";
+          error.code = !missing
+            ? "PDF_RENDER_FAILED"
+            : serverless
+              ? "POPPLER_UNAVAILABLE"
+              : "POPPLER_MISSING";
 
           return reject(error);
         }

@@ -41,6 +41,18 @@ export function setAdminToken(token) {
   }
 }
 
+/**
+ * Refusals that come from the hosting platform rather than the backend, so
+ * they carry no { error } body of ours. Both happen on an upload before or
+ * instead of the backend's own answer: a body over the platform's size cap is
+ * turned away before it reaches the function, and a function past its time
+ * limit is cut off mid-answer.
+ */
+const PLATFORM_MESSAGES = {
+  413: "ไฟล์ใหญ่เกินกว่าที่เซิร์ฟเวอร์รับได้ (สูงสุดประมาณ 4.5MB) — ลองบีบอัด PDF หรือส่งออกใหม่ให้ไฟล์เล็กลง",
+  504: "เซิร์ฟเวอร์ใช้เวลาอ่านไฟล์นานเกินกำหนด — ลองไฟล์ที่มีจำนวนหน้าน้อยลง แล้วอัปโหลดใหม่",
+};
+
 class ApiError extends Error {
   constructor(message, code, status, detail) {
     super(message);
@@ -76,7 +88,7 @@ async function request(path, { admin = false, headers = {}, ...options } = {}) {
 
   if (!response.ok) {
     throw new ApiError(
-      body?.error?.message || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
+      body?.error?.message || PLATFORM_MESSAGES[response.status] || "เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง",
       body?.error?.code || "UNKNOWN",
       response.status,
       body?.error?.detail

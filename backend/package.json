@@ -4,16 +4,21 @@
   "description": "Backend for Thai teacher schedule chatbot: PDF OCR extraction + chat API",
   "main": "server.js",
   "type": "commonjs",
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test \"tests/**/*.test.js\""
   },
   "dependencies": {
+    "@napi-rs/canvas": "^1.0.9",
     "@supabase/supabase-js": "^2.116.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "multer": "^1.4.5-lts.1"
+    "multer": "^1.4.5-lts.1",
+    "pdfjs-dist": "^6.3.289"
   }
 }

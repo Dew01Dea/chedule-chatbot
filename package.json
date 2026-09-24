@@ -7,6 +7,9 @@
     "backend",
     "frontend"
   ],
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "build": "npm run build --workspace frontend",
     "dev:backend": "npm run dev --workspace backend",

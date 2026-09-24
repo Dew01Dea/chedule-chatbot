@@ -192,10 +192,12 @@ rest.
 
 Uploading a schedule PDF. `POST /api/admin/schedules/upload` rasterizes each
 page with poppler's `pdftoppm`, and that binary cannot be installed into a
-serverless function, so the route answers `POPPLER_MISSING`. Two smaller limits
-sit behind the same route: Vercel caps a request body at 4.5MB where the route
-itself allows 15MB, and a function at 60s where OCR runs one Typhoon call per
-page in sequence.
+serverless function, so the route answers **`503 POPPLER_UNAVAILABLE`**. That
+is the route working as designed, not a broken deployment: the status line is
+all a browser console prints, and the response body carries a Thai message
+naming what to do instead. Two smaller limits sit behind the same route: Vercel
+caps a request body at 4.5MB where the route itself allows 15MB, and a function
+at 60s where OCR runs one Typhoon call per page in sequence.
 
 Everything else — the teacher list, chat, publishing, manual editing and
 deleting — only talks to Supabase and Typhoon over HTTP and runs here fine.

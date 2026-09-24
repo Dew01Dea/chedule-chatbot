@@ -6,11 +6,10 @@
  * vercel.json rewrites every /api/* request here, because one function keeps
  * Express's routing intact rather than splitting the routes across files.
  *
- * Known limitation: POST /api/admin/schedules/upload cannot work here. It
- * rasterizes the PDF with poppler's pdftoppm, and no binary of that kind
- * exists in this runtime, so the route answers POPPLER_MISSING. Uploading a
- * new schedule needs the backend run somewhere with poppler installed — see
- * backend/Dockerfile and the Deployment section of the README.
+ * Uploads work here too. poppler cannot be installed into a function, so PDFs
+ * are rasterized with pdf.js instead (services/pdfToImages.js); what remains
+ * are the platform's own limits on a request, which the README's Deployment
+ * section lists.
  */
 
 const app = require("../backend/server.js");

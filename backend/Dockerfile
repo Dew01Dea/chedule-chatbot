@@ -1,8 +1,9 @@
-# The OCR pipeline shells out to poppler's pdftoppm to rasterize each PDF page
-# before sending it to Typhoon, so the image needs poppler-utils present. This
-# is the reason the backend is not deployed as serverless functions: that
-# binary cannot be installed into a Vercel function.
-FROM node:20-bookworm-slim
+# PDFs are rasterized with poppler's pdftoppm where it is installed, and with
+# pdf.js (an npm dependency) otherwise. poppler is installed here because it
+# resolves fonts a PDF does not embed through the system's font configuration,
+# which pdf.js cannot — so a container gets the more faithful of the two.
+# Node 22.13+ is what pdfjs-dist requires.
+FROM node:22-bookworm-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends poppler-utils \

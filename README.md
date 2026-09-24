@@ -12,7 +12,7 @@ that teacher's published schedule.
 ```
 admin picks a teacher + term
   → uploads a schedule PDF
-  → rendered to page images (poppler)
+  → rendered to page images (poppler, or pdf.js where poppler is absent)
   → Typhoon OCR reads the Thai text/table layout  → raw markdown
   → Typhoon's instruct model structures it        → schema JSON
   → validator checks it                           → errors / warnings
@@ -35,13 +35,19 @@ Two Typhoon models, two jobs:
 
 ## Requirements
 
-- **Node.js 20+** (the tests use the built-in test runner).
-- **poppler** — PDF pages are rasterised with `pdftoppm` before OCR. If the
-  server cannot find it, set `POPPLER_PATH` in `backend/.env` to poppler's bin
-  directory (e.g. `C:\poppler\Library\bin`) and PATH stops mattering. That is
-  the reliable option on Windows, where a process inherits PATH at launch and
-  an editor's integrated terminal inherits it from the editor — so poppler can
-  work in a new shell while the server still cannot see it.
+- **Node.js 22.13+** — what `pdfjs-dist` requires; the tests also use the
+  built-in test runner.
+- **poppler** — *optional.* PDF pages are rasterised before OCR, with poppler's
+  `pdftoppm` when it is installed and with pdf.js (an npm dependency, installed
+  by `npm install`) when it is not. poppler is preferred because it draws fonts
+  a PDF does not embed from the system's own fonts, which pdf.js cannot; for the
+  usual exported PDF, which embeds its fonts, the two read the same. If poppler
+  is installed but the server cannot find it, set `POPPLER_PATH` in
+  `backend/.env` to poppler's bin directory (e.g. `C:\poppler\Library\bin`)
+  and PATH stops mattering. That is the reliable option on Windows, where a
+  process inherits PATH at launch and an editor's integrated terminal inherits
+  it from the editor — so poppler can work in a new shell while the server
+  still cannot see it.
   - macOS: `brew install poppler`
   - Ubuntu/Debian: `sudo apt-get install poppler-utils`
   - Windows: install poppler and add its `bin` folder to PATH
@@ -188,22 +194,32 @@ bundle, the backend as a single serverless function. The repository is an npm
 workspace, so `npm ci` at the root installs both and `vercel.json` describes the
 rest.
 
-### What does not work on Vercel
+### Uploading on Vercel, and its limits
 
-Uploading a schedule PDF. `POST /api/admin/schedules/upload` rasterizes each
-page with poppler's `pdftoppm`, and that binary cannot be installed into a
-serverless function, so the route answers **`503 POPPLER_UNAVAILABLE`**. That
-is the route working as designed, not a broken deployment: the status line is
-all a browser console prints, and the response body carries a Thai message
-naming what to do instead. Two smaller limits sit behind the same route: Vercel
-caps a request body at 4.5MB where the route itself allows 15MB, and a function
-at 60s where OCR runs one Typhoon call per page in sequence.
+Everything works on Vercel, uploads included. poppler cannot be installed into
+a serverless function, so there PDFs are rasterized with pdf.js drawing onto
+`@napi-rs/canvas` — both npm packages with prebuilt binaries, bundled into the
+function like any other dependency.
 
-Everything else — the teacher list, chat, publishing, manual editing and
-deleting — only talks to Supabase and Typhoon over HTTP and runs here fine.
+pdf.js loads `@napi-rs/canvas` through a require it assembles at runtime, which
+the tracer that decides a function's files cannot follow. `pdfToImages.js`
+therefore requires it by name before loading pdf.js, and does the same for the
+pdf.js worker; without that, the deployed function would lack both and every
+upload would fail while working locally.
 
-To upload a new schedule, run the backend somewhere with poppler: locally with
-`npm run dev --workspace backend`, or as a container from `backend/Dockerfile`
+What remains are the platform's limits on a single request:
+
+- **4.5MB request body.** Vercel turns a larger upload away before it reaches
+  the function, where the route itself would allow 15MB. A PDF exported from
+  Word or Excel is far smaller; a scanned one may not be. The admin page
+  explains a refusal in Thai rather than showing a bare 413.
+- **60s per request** (`maxDuration` in `vercel.json`, the Hobby plan's
+  ceiling). OCR runs up to three pages at once to stay inside it; a document
+  of many pages can still run out, and the admin page then explains the 504.
+  With Fluid Compute on, the plan may allow a higher `maxDuration`.
+
+For a PDF past either limit, run the backend where there is no such cap:
+locally with `npm run dev:backend`, or as a container from `backend/Dockerfile`
 (`render.yaml` wires that up on Render). Both write to the same Supabase
 project, so a schedule published from either one is immediately live on the
 deployed site.
@@ -251,7 +267,8 @@ Three variables are deliberately **not** set here:
   for pointing the frontend at a backend on another host.
 - `ALLOWED_ORIGINS` — same reason. One origin means no cross-origin request to
   allow.
-- `POPPLER_PATH` — there is no poppler here to point at.
+- `POPPLER_PATH` — there is no poppler here to point at; pdf.js renders
+  instead.
 
 These are read at request time by the function, so changing one takes effect
 without a rebuild. `VITE_API_BASE_URL` is the exception: Vite inlines `VITE_*`
@@ -273,8 +290,8 @@ Routing is done on the URL hash, so `/#admin` needs no rewrite rules.
 
 ### Running the backend as a container instead
 
-`backend/Dockerfile` installs `poppler-utils`, so a container has the full
-pipeline including uploads. On Render, point a new Blueprint at this repository
+`backend/Dockerfile` installs `poppler-utils`, so a container renders with
+poppler and has no request-size or time cap on uploads. On Render, point a new Blueprint at this repository
 and it reads `render.yaml`; by hand, on any Docker host:
 
 | Setting | Value |
@@ -299,9 +316,11 @@ cd backend
 npm test
 ```
 
-47 tests covering validation rules, teacher naming, API scoping, admin
-authorisation and upload handling. They use stubs for the database and for
-Typhoon, so no network or API key is needed.
+73 tests covering validation rules, teacher naming, API scoping, admin
+authorisation, upload handling and PDF rendering. They use stubs for the
+database and for Typhoon, so no network or API key is needed. The rendering
+tests always exercise pdf.js, whether or not poppler is installed, since pdf.js
+is what a serverless deployment runs.
 
 There is also a SQL test of the publish/replace flow, run against a database
 with the schema applied:

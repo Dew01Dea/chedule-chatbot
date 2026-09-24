@@ -28,21 +28,13 @@ const USER_SAFE_MESSAGES = {
   // These reach admins only, on routes behind the admin token. An operator
   // cannot fix a setup problem they are not told about, and none of these
   // reveal anything a reviewer should not already know.
-  POPPLER_MISSING:
-    "เซิร์ฟเวอร์หาคำสั่ง pdftoppm (poppler) ไม่เจอ จึงแปลง PDF เป็นภาพไม่ได้ — " +
-    "วิธีที่ชัวร์ที่สุดคือไม่ต้องพึ่ง PATH: เพิ่ม POPPLER_PATH ในไฟล์ backend/.env " +
-    "ให้ชี้ไปที่โฟลเดอร์ bin ของ poppler เช่น POPPLER_PATH=C:\\poppler\\Library\\bin " +
-    "แล้วรีสตาร์ทเซิร์ฟเวอร์",
-
-  // The same missing binary, where no setting can bring it back. Naming the
-  // remedy that exists matters more here than naming the cause: an operator
-  // told only "poppler not found" on a serverless deployment will go looking
-  // for a setting that was never going to work.
-  POPPLER_UNAVAILABLE:
-    "เซิร์ฟเวอร์นี้แปลง PDF เป็นภาพไม่ได้ เพราะรันแบบ serverless ซึ่งติดตั้ง poppler ไม่ได้ " +
-    "จึงอัปโหลดตารางสอนที่นี่ไม่ได้ — ให้รัน backend บนเครื่องของคุณ (npm run dev:backend) " +
-    "หรือใน container จาก backend/Dockerfile แล้วอัปโหลดจากที่นั่น " +
-    "ตารางที่เผยแพร่จะขึ้นบนเว็บนี้ทันที เพราะใช้ฐานข้อมูล Supabase เดียวกัน",
+  // PDFs are rendered with poppler where it is installed and with pdf.js
+  // everywhere else, so a missing poppler is no longer an error. This is the
+  // case where neither exists: pdf.js is an npm dependency, so its absence
+  // means the install did not complete.
+  PDF_RENDERER_UNAVAILABLE:
+    "เซิร์ฟเวอร์ไม่มีตัวแปลง PDF เป็นภาพ — ติดตั้ง dependency ใหม่ด้วย npm install " +
+    "แล้วรีสตาร์ทเซิร์ฟเวอร์ (หรือ deploy ใหม่ถ้ารันบน Vercel)",
   PDF_RENDER_FAILED: "เปิดไฟล์ PDF นี้ไม่สำเร็จ ไฟล์อาจเสียหายหรือถูกตั้งรหัสผ่านไว้",
   TYPHOON_KEY_MISSING: "ยังไม่ได้ตั้งค่า TYPHOON_API_KEY ในไฟล์ backend/.env",
   TYPHOON_KEY_REJECTED: "Typhoon ปฏิเสธ API key — ตรวจสอบ TYPHOON_API_KEY อีกครั้ง",
@@ -53,8 +45,7 @@ const USER_SAFE_MESSAGES = {
 
 // Setup problems are the server's fault, not the request's.
 const SERVER_FAULT_CODES = new Set([
-  "POPPLER_MISSING",
-  "POPPLER_UNAVAILABLE",
+  "PDF_RENDERER_UNAVAILABLE",
   "TYPHOON_KEY_MISSING",
   "TYPHOON_KEY_REJECTED",
   "TYPHOON_UNAVAILABLE",

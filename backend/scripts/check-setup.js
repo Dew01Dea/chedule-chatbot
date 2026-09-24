@@ -96,7 +96,7 @@ function checkTyphoon() {
 }
 
 async function checkPopplerSection() {
-  section("[4] poppler (pdftoppm)  ← ต้องมีถึงจะอ่าน PDF ได้");
+  section("[4] ตัวแปลง PDF เป็นภาพ (poppler หรือ pdf.js)");
 
   let checkPoppler;
   try {
@@ -116,14 +116,32 @@ async function checkPopplerSection() {
     return;
   }
 
-  bad(
-    `${result.reason} — หาใน ${result.lookedIn}`,
-    process.platform === "win32"
-      ? "วิธีที่ชัวร์ที่สุด ไม่ต้องยุ่งกับ PATH: เพิ่มบรรทัดนี้ใน backend/.env แล้วรีสตาร์ท\n" +
-          "         POPPLER_PATH=C:\\poppler\\Library\\bin\n" +
-          "        (ชี้ไปโฟลเดอร์ที่มีไฟล์ pdftoppm.exe อยู่จริง)"
-      : "macOS: brew install poppler  /  Ubuntu: sudo apt-get install poppler-utils\n" +
-          "        หรือกำหนด POPPLER_PATH ใน .env ให้ชี้ไปโฟลเดอร์ bin ของ poppler"
+  // Without poppler the server renders with pdf.js instead, so this is only a
+  // failure if pdf.js is missing too.
+  let pdfjsLoads = false;
+  try {
+    require.resolve("pdfjs-dist/package.json");
+    require("@napi-rs/canvas");
+    pdfjsLoads = true;
+  } catch {
+    // reported below
+  }
+
+  if (!pdfjsLoads) {
+    bad(
+      `ไม่มีทั้ง poppler (${result.reason}) และ pdf.js — อ่าน PDF ไม่ได้`,
+      "ติดตั้ง dependency ใหม่:  npm install   (จากโฟลเดอร์หลักของโปรเจกต์)"
+    );
+    return;
+  }
+
+  ok("ใช้ pdf.js แปลง PDF (ไม่มี poppler ก็อ่าน PDF ได้)");
+  warn(
+    `ไม่พบ poppler — ${result.reason} (หาใน ${result.lookedIn})`,
+    "ไม่จำเป็น แต่ถ้า PDF ไม่ได้ฝังฟอนต์ไว้ poppler จะแสดงตัวอักษรได้ถูกกว่า\n" +
+      (process.platform === "win32"
+        ? "        ติดตั้งแล้วเพิ่มใน backend/.env:  POPPLER_PATH=C:\\poppler\\Library\\bin"
+        : "        macOS: brew install poppler  /  Ubuntu: sudo apt-get install poppler-utils")
   );
 }
 

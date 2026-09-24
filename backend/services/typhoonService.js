@@ -124,6 +124,14 @@ async function ocrImagePage(base64Png) {
 }
 
 /**
+ * Pages OCR'd at once. Each call takes seconds, and a serverless function has
+ * a hard deadline for the whole upload, so pages run side by side rather than
+ * one after another. Capped so a long document cannot fire a burst of calls
+ * that Typhoon's rate limit would refuse.
+ */
+const OCR_CONCURRENCY = 3;
+
+/**
  * OCRs every page of a PDF and concatenates the resulting markdown, in page order.
  */
 async function ocrPdfWithTyphoon(pdfBuffer) {
@@ -133,11 +141,21 @@ async function ocrPdfWithTyphoon(pdfBuffer) {
     throw new Error("No pages could be rendered from the uploaded PDF.");
   }
 
-  const pageMarkdowns = [];
-  for (let i = 0; i < pages.length; i++) {
-    const markdown = await ocrImagePage(pages[i]);
-    pageMarkdowns.push(`--- Page ${i + 1} ---\n${markdown}`);
-  }
+  // Results land by index, so page order holds whatever order calls finish in.
+  const pageMarkdowns = new Array(pages.length);
+  let next = 0;
+
+  const worker = async () => {
+    while (next < pages.length) {
+      const i = next++;
+      const markdown = await ocrImagePage(pages[i]);
+      pageMarkdowns[i] = `--- Page ${i + 1} ---\n${markdown}`;
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(OCR_CONCURRENCY, pages.length) }, worker)
+  );
 
   return pageMarkdowns.join("\n\n");
 }
